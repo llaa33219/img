@@ -14,16 +14,16 @@
   <!-- Firebase 설정 코드 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js"; // Firestore 가져오기
     
     const firebaseConfig = {
-    apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
-    authDomain: "img-planet.firebaseapp.com",
-    projectId: "img-planet",
-    storageBucket: "img-planet.appspot.com",
-    messagingSenderId: "781142620906",
-    appId: "1:781142620906:web:bf5b02e6f99e71d314f593",
-    measurementId: "G-6RF6K79QDF"
+      apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
+      authDomain: "img-planet.firebaseapp.com",
+      projectId: "img-planet",
+      storageBucket: "img-planet.appspot.com",
+      messagingSenderId: "781142620906",
+      appId: "1:781142620906:web:bf5b02e6f99e71d314f593",
+      measurementId: "G-6RF6K79QDF"
     };
 
     // Firebase 초기화
@@ -42,13 +42,13 @@
           const imageUrl = docSnap.data().url;
           document.getElementById('imageContainer').innerHTML = `<img src="${imageUrl}" alt="Image">`;
         } else {
-          document.getElementById('imageContainer').innerText = "No image found.";
+          document.getElementById('imageContainer').innerText = "이미지를 찾을 수 없습니다.";
         }
       }).catch((error) => {
-        console.error("Error fetching image:", error);
+        console.error("이미지를 불러오는 중 오류 발생:", error);
       });
     } else {
-      document.getElementById('imageContainer').innerText = "No name provided in the URL.";
+      document.getElementById('imageContainer').innerText = "URL에 이름이 제공되지 않았습니다.";
     }
   </script>
 </body>
