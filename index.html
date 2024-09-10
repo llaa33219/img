@@ -19,6 +19,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
@@ -32,14 +33,15 @@
 
     // Firebase 초기화
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
 
-    // Firestore 및 Storage 객체 생성
+    // Firestore 및 Storage 인스턴스 가져오기
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // 전역 객체 설정 (upload.js에서 사용 가능하도록)
-    window.firebaseStorage = storage;
+    // 전역 객체로 Firestore와 Storage를 저장 (upload.js에서 접근 가능하도록)
     window.firebaseFirestore = db;
+    window.firebaseStorage = storage;
   </script>
 
   <!-- 업로드 로직이 포함된 스크립트 -->

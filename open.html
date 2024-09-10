@@ -46,9 +46,10 @@
         }
       }).catch((error) => {
         console.error("이미지를 불러오는 중 오류 발생:", error);
+        document.getElementById('imageContainer').innerText = "이미지를 불러오는 중 오류가 발생했습니다.";
       });
     } else {
-      document.getElementById('imageContainer').innerText = "URL에 이름이 제공되지 않았습니다.";
+      document.getElementById('imageContainer').innerText = "URL에 이미지 이름이 제공되지 않았습니다.";
     }
   </script>
 </body>
