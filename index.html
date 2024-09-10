@@ -14,15 +14,16 @@
 
   <p id="status"></p>
 
-  <!-- Firebase 및 업로드 스크립트 포함 -->
+  <!-- Firebase 및 익명 인증, 업로드 스크립트 포함 -->
   <script type="module">
-    // Firebase 설정
+    // Firebase SDK 불러오기
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
 
-    // Firebase 구성
+    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
       authDomain: "img-planet.firebaseapp.com",
@@ -36,10 +37,18 @@
     // Firebase 초기화
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
-
-    // Firestore 및 Storage 초기화
     const db = getFirestore(app);
     const storage = getStorage(app);
+    const auth = getAuth();
+
+    // 익명 인증 처리
+    signInAnonymously(auth)
+      .then(() => {
+        console.log("익명으로 로그인 성공");
+      })
+      .catch((error) => {
+        console.error("익명 인증 실패:", error);
+      });
 
     // 이미지 업로드 로직
     document.getElementById('uploadButton').addEventListener('click', async () => {
