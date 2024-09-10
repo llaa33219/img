@@ -14,7 +14,7 @@
   <!-- Firebase 및 스크립트 포함 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
     // Firebase 설정
     const firebaseConfig = {
@@ -29,22 +29,19 @@
 
     // Firebase 초기화
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const storage = getStorage(app);
 
     // URL에서 이미지 이름 가져오기
     const urlParams = new URLSearchParams(window.location.search);
-    const imageName = urlParams.get('name');
+    const imageName = urlParams.get('name');  // 예: ?name=example
 
     if (imageName) {
-      // Firestore에서 이미지 URL 가져오기
-      const docRef = doc(db, 'images', imageName);
-      getDoc(docRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          const imageUrl = docSnap.data().url;
-          document.getElementById('imageContainer').innerHTML = `<img src="${imageUrl}" alt="Image">`;
-        } else {
-          document.getElementById('imageContainer').innerText = "이미지를 찾을 수 없습니다.";
-        }
+      // Firebase Storage에서 이미지 URL 가져오기
+      const storageRef = ref(storage, `${imageName}/${imageName}.jpg`);  // 예: storage에서 이미지 이름으로 폴더 구조 사용
+
+      getDownloadURL(storageRef).then((url) => {
+        // 이미지 URL을 성공적으로 가져오면, 페이지에 이미지 표시
+        document.getElementById('imageContainer').innerHTML = `<img src="${url}" alt="${imageName}">`;
       }).catch((error) => {
         console.error("이미지 불러오기 실패:", error);
         document.getElementById('imageContainer').innerText = "이미지를 불러오는 중 오류가 발생했습니다.";
