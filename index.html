@@ -14,15 +14,15 @@
 
   <p id="status"></p>
 
-  <!-- Firebase 설정 코드 -->
+  <!-- Firebase 및 업로드 스크립트 포함 -->
   <script type="module">
-    // Firebase SDK 불러오기
+    // Firebase 설정
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-    import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
 
-    // Firebase 설정 정보
+    // Firebase 구성
     const firebaseConfig = {
       apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
       authDomain: "img-planet.firebaseapp.com",
@@ -41,12 +41,39 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // 전역 객체로 Firestore와 Storage를 설정 (upload.js에서 접근 가능하도록)
-    window.firebaseFirestore = db;
-    window.firebaseStorage = storage;
-  </script>
+    // 이미지 업로드 로직
+    document.getElementById('uploadButton').addEventListener('click', async () => {
+      const imageFile = document.getElementById('imageInput').files[0];
+      const imageName = document.getElementById('imageName').value;
 
-  <!-- 업로드 로직이 포함된 스크립트 -->
-  <script src="upload.js" type="module"></script>
+      if (!imageFile || !imageName) {
+        document.getElementById('status').innerText = "이미지를 선택하고 이름을 입력하세요.";
+        return;
+      }
+
+      try {
+        // Firestore에서 중복 이름 확인
+        const docRef = doc(db, 'images', imageName);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          document.getElementById('status').innerText = "이미지 이름이 이미 사용 중입니다.";
+          return;
+        }
+
+        // Firebase Storage에 이미지 업로드
+        const storageRef = ref(storage, `${imageName}/${imageFile.name}`);
+        await uploadBytes(storageRef, imageFile);
+        const downloadURL = await getDownloadURL(storageRef);
+
+        // Firestore에 이미지 정보 저장
+        await setDoc(doc(db, 'images', imageName), { url: downloadURL });
+        document.getElementById('status').innerText = `업로드 성공! 이미지 URL: ${downloadURL}`;
+      } catch (error) {
+        console.error("업로드 실패:", error);
+        document.getElementById('status').innerText = "업로드에 실패했습니다! 에러: " + error.message;
+      }
+    });
+  </script>
 </body>
 </html>
