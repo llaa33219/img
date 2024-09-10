@@ -18,20 +18,20 @@
   <script type="module">
     // Firebase SDK 불러오기
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
 
     // Firebase 설정
     const firebaseConfig = {
-      apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
-      authDomain: "img-planet.firebaseapp.com",
-      projectId: "img-planet",
-      storageBucket: "img-planet.appspot.com",
-      messagingSenderId: "781142620906",
-      appId: "1:781142620906:web:bf5b02e6f99e71d314f593",
-      measurementId: "G-6RF6K79QDF"
+      apiKey: "AIzaSyDKPguqB_dv_0bJACodAJ6-WiTJyXk8aZI",
+      authDomain: "img-share-get.firebaseapp.com",
+      projectId: "img-share-get",
+      storageBucket: "img-share-get.appspot.com",
+      messagingSenderId: "369939088918",
+      appId: "1:369939088918:web:64c10cbea97db9bf63d737",
+      measurementId: "G-41LEJK3NDW"
     };
 
     // Firebase 초기화
@@ -40,15 +40,6 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
     const auth = getAuth();
-
-    // Firestore 오프라인 지원 활성화
-    enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        console.error("오프라인 기능 활성화 실패: 동시 실행 제한");
-      } else if (err.code === 'unimplemented') {
-        console.error("오프라인 기능이 브라우저에서 지원되지 않음");
-      }
-    });
 
     // 익명 인증 처리
     signInAnonymously(auth)

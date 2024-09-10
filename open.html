@@ -6,37 +6,38 @@
   <title>View Image</title>
 </head>
 <body>
-  <h1>Viewing Image</h1>
+  <h1>View Image</h1>
   <div id="imageContainer">
     <p>Loading image...</p>
   </div>
 
-  <!-- Firebase 설정 코드 -->
+  <!-- Firebase 및 스크립트 포함 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js"; // Firestore 가져오기
-    
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+    // Firebase 설정
     const firebaseConfig = {
-      apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
-      authDomain: "img-planet.firebaseapp.com",
-      projectId: "img-planet",
-      storageBucket: "img-planet.appspot.com",
-      messagingSenderId: "781142620906",
-      appId: "1:781142620906:web:bf5b02e6f99e71d314f593",
-      measurementId: "G-6RF6K79QDF"
+      apiKey: "AIzaSyDKPguqB_dv_0bJACodAJ6-WiTJyXk8aZI",
+      authDomain: "img-share-get.firebaseapp.com",
+      projectId: "img-share-get",
+      storageBucket: "img-share-get.appspot.com",
+      messagingSenderId: "369939088918",
+      appId: "1:369939088918:web:64c10cbea97db9bf63d737",
+      measurementId: "G-41LEJK3NDW"
     };
 
     // Firebase 초기화
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // URL에서 name 파라미터 가져오기
+    // URL에서 이미지 이름 가져오기
     const urlParams = new URLSearchParams(window.location.search);
-    const name = urlParams.get('name');
+    const imageName = urlParams.get('name');
 
-    if (name) {
-      // Firestore에서 해당 이미지의 URL 가져오기
-      const docRef = doc(db, 'images', name);
+    if (imageName) {
+      // Firestore에서 이미지 URL 가져오기
+      const docRef = doc(db, 'images', imageName);
       getDoc(docRef).then((docSnap) => {
         if (docSnap.exists()) {
           const imageUrl = docSnap.data().url;
@@ -45,7 +46,7 @@
           document.getElementById('imageContainer').innerText = "이미지를 찾을 수 없습니다.";
         }
       }).catch((error) => {
-        console.error("이미지를 불러오는 중 오류 발생:", error);
+        console.error("이미지 불러오기 실패:", error);
         document.getElementById('imageContainer').innerText = "이미지를 불러오는 중 오류가 발생했습니다.";
       });
     } else {

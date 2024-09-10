@@ -10,10 +10,10 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
     return;
   }
 
-  const storage = window.firebaseStorage;
-  const db = window.firebaseFirestore;
-
   try {
+    const storage = window.firebaseStorage;
+    const db = window.firebaseFirestore;
+
     // Firestore에서 중복 이름 확인
     const docRef = doc(db, 'images', imageName);
     const docSnap = await getDoc(docRef);
