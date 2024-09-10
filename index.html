@@ -16,11 +16,13 @@
 
   <!-- Firebase 설정 코드 -->
   <script type="module">
+    // Firebase SDK 불러오기
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
 
+    // Firebase 설정 정보
     const firebaseConfig = {
       apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
       authDomain: "img-planet.firebaseapp.com",
@@ -35,11 +37,11 @@
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
 
-    // Firestore 및 Storage 인스턴스 가져오기
+    // Firestore 및 Storage 초기화
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // 전역 객체로 Firestore와 Storage를 저장 (upload.js에서 접근 가능하도록)
+    // 전역 객체로 Firestore와 Storage를 설정 (upload.js에서 접근 가능하도록)
     window.firebaseFirestore = db;
     window.firebaseStorage = storage;
   </script>
