@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Upload</title>
+</head>
+<body>
+  <h1>Upload an Image</h1>
+  
+  <input type="file" id="imageInput" accept="image/*">
+  <input type="text" id="imageName" placeholder="Enter image name">
+  <button id="uploadButton">Upload</button>
+
+  <p id="status"></p>
+
+  <!-- Firebase 설정 코드 -->
+  <script type="module">
+    // Firebase 모듈 가져오기
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+    // Firebase 설정
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID",
+      measurementId: "YOUR_MEASUREMENT_ID"
+    };
+
+    // Firebase 초기화
+    const app = initializeApp(firebaseConfig);
+
+    // Firebase 모듈 초기화
+    const storage = getStorage(app);
+    const db = getFirestore(app);
+
+    // 전역으로 사용 가능하도록 window 객체에 할당
+    window.firebaseStorage = storage;
+    window.firebaseFirestore = db;
+  </script>
+
+  <!-- 업로드 로직이 포함된 스크립트 -->
+  <script src="upload.js" type="module"></script>
+</body>
+</html>
