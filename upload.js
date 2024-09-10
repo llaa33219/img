@@ -11,8 +11,9 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
   }
 
   try {
-    const storage = window.firebaseStorage;
-    const db = window.firebaseFirestore;
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    const db = getFirestore(app);    
 
     // Firestore에서 중복 이름 확인
     const docRef = doc(db, 'images', imageName);
