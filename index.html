@@ -16,30 +16,28 @@
 
   <!-- Firebase 설정 코드 -->
   <script type="module">
-    // Firebase 모듈 가져오기
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
-    // Firebase 설정
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID",
-      measurementId: "YOUR_MEASUREMENT_ID"
+      apiKey: "AIzaSyAQCod_UWT5TyqfsbFp5x1-1Ts9vUCv_mw",
+      authDomain: "img-planet.firebaseapp.com",
+      projectId: "img-planet",
+      storageBucket: "img-planet.appspot.com",
+      messagingSenderId: "781142620906",
+      appId: "1:781142620906:web:bf5b02e6f99e71d314f593",
+      measurementId: "G-6RF6K79QDF"
     };
 
     // Firebase 초기화
     const app = initializeApp(firebaseConfig);
 
-    // Firebase 모듈 초기화
-    const storage = getStorage(app);
+    // Firestore 및 Storage 객체 생성
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    // 전역으로 사용 가능하도록 window 객체에 할당
+    // 전역 객체 설정 (upload.js에서 사용 가능하도록)
     window.firebaseStorage = storage;
     window.firebaseFirestore = db;
   </script>
