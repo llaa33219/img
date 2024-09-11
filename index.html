@@ -8,13 +8,21 @@
     body {
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       height: 100vh;
       flex-direction: column;
       margin: 0;
+      padding: 20px;
     }
 
-    button, input[type="file"] {
+    .upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .custom-file-upload {
+      display: inline-block;
       background-color: #007BFF;
       color: white;
       border: none;
@@ -31,13 +39,45 @@
       text-align: center;
     }
 
-    button:hover, input[type="file"]:hover {
+    .custom-file-upload:hover {
       background-color: #005BDD;
       transform: translateY(2px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    button:active, input[type="file"]:active {
+    .custom-file-upload:active {
+      background-color: #0026a3;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 20px;
+      margin: 20px 0;
+      width: 600px;
+      height: 61px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    button:hover {
+      background-color: #005BDD;
+      transform: translateY(2px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
       background-color: #0026a3;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
@@ -60,18 +100,24 @@
   </style>
 </head>
 <body>
-  <h1>Upload an Image</h1>
+  <div class="upload-container">
+    <h1>Upload an Image</h1>
 
-  <input type="file" id="imageInput" accept="image/*">
-  <button id="uploadButton">Upload</button>
+    <label for="fileInput" class="custom-file-upload">
+      Select File
+    </label>
+    <input type="file" id="fileInput" accept="image/*">
 
-  <p id="status"></p>
+    <button id="uploadButton">Upload</button>
 
-  <!-- 이미지 링크 표시할 텍스트 박스 -->
-  <input type="text" id="linkBox" readonly>
+    <p id="status"></p>
 
-  <!-- 이미지를 표시할 컨테이너 -->
-  <div id="imageContainer"></div>
+    <!-- 이미지 링크 표시할 텍스트 박스 -->
+    <input type="text" id="linkBox" readonly>
+
+    <!-- 이미지를 표시할 컨테이너 -->
+    <div id="imageContainer"></div>
+  </div>
 
   <!-- Firebase 및 업로드 스크립트 포함 -->
   <script type="module">
@@ -103,9 +149,12 @@
       document.getElementById('status').innerText = "익명 인증 실패: " + error.message;
     });
 
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
+
     // 이미지 업로드 처리
-    document.getElementById('uploadButton').addEventListener('click', async () => {
-      const imageFile = document.getElementById('imageInput').files[0];
+    uploadButton.addEventListener('click', async () => {
+      const imageFile = fileInput.files[0];
 
       if (!imageFile) {
         document.getElementById('status').innerText = "이미지를 선택하세요.";
