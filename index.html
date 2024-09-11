@@ -182,7 +182,7 @@
       }
     });
 
-    // 이미지 업로드 처리
+   // 이미지 업로드 처리
     uploadButton.addEventListener('click', async () => {
       const imageFile = fileInput.files[0];
 
@@ -191,7 +191,22 @@
         return;
       }
 
+      // 허용된 파일 확장자 목록
+      const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+
+      // 파일 확장자 추출
+      const fileExtension = imageFile.name.split('.').pop().toLowerCase();
+
+      // 파일 확장자가 허용되지 않은 경우
+      if (!allowedExtensions.includes(fileExtension)) {
+        document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다. (.png, .bmp, .jpg, .jpeg, .webp, .gif만 가능합니다)";
+        return;
+      }
+
       try {
+        // 업로드 중 메시지 표시
+        document.getElementById('status').innerText = "업로드 중...";
+
         // 임의의 짧은 이름 생성
         const uniqueImageName = Math.random().toString(36).substring(2, 8); // 6자리 임의의 문자열 생성
 
