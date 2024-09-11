@@ -5,115 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Image Upload</title>
   <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      height: 100vh;
-      flex-direction: column;
-      margin: 0;
-      padding: 20px;
-    }
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* 위쪽 정렬을 유지 */
+  height: 100vh;
+  flex-direction: column;
+  margin: 0;
+  padding: 20px;
+  overflow: auto; /* 스크롤을 허용 */
+}
 
-    .upload-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    .custom-file-upload {
-      display: inline-block;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 10px 20px;
-      margin: 20px 0;
-      width: 600px;
-      height: 61px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-      font-weight: bold;
-      font-size: 18px;
-      text-align: center;
-    }
+.custom-file-upload {
+  display: inline-block;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  margin: 20px 0;
+  width: 600px;
+  height: 61px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+}
 
-    .custom-file-upload:hover {
-      background-color: #005BDD;
-      transform: translateY(2px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
+.custom-file-upload:hover {
+  background-color: #005BDD;
+  transform: translateY(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-    .custom-file-upload:active {
-      background-color: #0026a3;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
+.custom-file-upload:active {
+  background-color: #0026a3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-    #fileInput {
-      display: none;
-    }
+#fileInput {
+  display: none;
+}
 
-    button {
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 10px 20px;
-      margin: 20px 0;
-      width: 600px;
-      height: 61px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-      font-weight: bold;
-      font-size: 18px;
-      text-align: center;
-    }
+button {
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  margin: 20px 0;
+  width: 600px;
+  height: 61px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+}
 
-    button:hover {
-      background-color: #005BDD;
-      transform: translateY(2px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
+button:hover {
+  background-color: #005BDD;
+  transform: translateY(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-    button:active {
-      background-color: #0026a3;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
+button:active {
+  background-color: #0026a3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-    #linkBox {
-      width: 500px;
-      height: 40px;
-      margin: 20px 0;
-      font-size: 16px;
-      padding: 10px;
-      text-align: center;
-    }
+#linkBox {
+  width: 500px;
+  height: 40px;
+  margin: 20px 0;
+  font-size: 16px;
+  padding: 10px;
+  text-align: center;
+}
 
-    .copy-button {
-      background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
-      background-size: contain;
-      border: none;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
+.copy-button {
+  background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
 
-    .link-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+.link-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-    #imageContainer img {
-      max-width: 66.6vw; /* 화면 가로의 2/3 차지 */
-      height: auto; /* 비율 유지 */
-      display: block;
-      margin: 20px auto;
-    }
+#imageContainer img {
+  max-width: 66.6vw; /* 화면 가로의 2/3 차지 */
+  max-height: 80vh; /* 화면 세로의 80%까지 차지 */
+  height: auto; /* 비율 유지 */
+  display: block;
+  margin: 20px auto;
+}
   </style>
 </head>
 <body>
