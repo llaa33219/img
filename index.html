@@ -89,18 +89,37 @@
       display: block;
       margin: 20px auto;
     }
+    .container {
+            text-align: center;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        font-size: 30px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .header-content img {
+        margin-right: 20px;
+    }
   </style>
 </head>
 <body>
+  <div class="header-content">
+    <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
+    <h1>이미지 공유</h1>
+  </div>
   <div class="upload-container">
-    <h1>Upload an Image</h1>
 
-    <button id="fileSelectButton">Select File</button>
+    <button id="fileSelectButton">파일 선택</button>
     <input type="file" id="fileInput" accept="image/*" style="display: none;">
 
-    <div id="fileNameDisplay">No file selected</div>
+    <div id="fileNameDisplay">파일 선택 안됨</div>
 
-    <button id="uploadButton">Upload</button>
+    <button id="uploadButton">업로드</button>
 
     <p id="status"></p>
 
