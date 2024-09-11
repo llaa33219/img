@@ -83,12 +83,29 @@
     }
 
     #linkBox {
-      width: 600px;
+      width: 500px;
       height: 40px;
       margin: 20px 0;
       font-size: 16px;
       padding: 10px;
       text-align: center;
+    }
+
+    .copy-button {
+      background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
+      background-size: contain;
+      border: none;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    .link-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     #imageContainer img {
@@ -112,8 +129,11 @@
 
     <p id="status"></p>
 
-    <!-- 이미지 링크 표시할 텍스트 박스 -->
-    <input type="text" id="linkBox" readonly>
+    <!-- 링크 텍스트 박스와 복사 버튼을 포함한 컨테이너 -->
+    <div class="link-container">
+      <input type="text" id="linkBox" readonly>
+      <button class="copy-button" id="copyButton"></button>
+    </div>
 
     <!-- 이미지를 표시할 컨테이너 -->
     <div id="imageContainer"></div>
@@ -126,15 +146,13 @@
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
     const firebaseConfig = {
-      apiKey: "AIzaSyDKPguqB_dv_0bJACodAJ6-WiTJyXk8aZI",
-      authDomain: "img-share-get.firebaseapp.com",
-      projectId: "img-share-get",
-      storageBucket: "img-share-get.appspot.com",
-      messagingSenderId: "369939088918",
-      appId: "1:369939088918:web:64c10cbea97db9bf63d737",
-      measurementId: "G-41LEJK3NDW"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -184,6 +202,14 @@
         console.error("업로드 실패:", error);
         document.getElementById('status').innerText = "업로드에 실패했습니다! 에러: " + error.message;
       }
+    });
+
+    // 텍스트 박스의 내용을 복사하는 함수
+    document.getElementById('copyButton').addEventListener('click', () => {
+      const linkBox = document.getElementById('linkBox');
+      linkBox.select();
+      document.execCommand('copy');
+      alert('링크가 복사되었습니다!');
     });
 
     // URL 파라미터에서 이미지 이름을 가져와 로딩하는 함수
