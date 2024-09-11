@@ -9,7 +9,6 @@
   <h1>Upload an Image</h1>
 
   <input type="file" id="imageInput" accept="image/*">
-  <input type="text" id="imageName" placeholder="Enter image name">
   <button id="uploadButton">Upload</button>
 
   <p id="status"></p>
@@ -20,7 +19,6 @@
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { v4 as uuidv4 } from "https://cdn.jsdelivr.net/npm/uuid@9.0.0/dist/esm-browser/index.js"; // UUID 생성
 
     const firebaseConfig = {
       apiKey: "AIzaSyDKPguqB_dv_0bJACodAJ6-WiTJyXk8aZI",
@@ -44,40 +42,57 @@
       document.getElementById('status').innerText = "익명 인증 실패: " + error.message;
     });
 
+    // 임의의 짧은 고유 이름 생성 함수
+    function generateRandomString(length) {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      const charactersLength = characters.length;
+      for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      }
+      return result;
+    }
+
+    // 이미지 업로드 처리
     document.getElementById('uploadButton').addEventListener('click', async () => {
       const imageFile = document.getElementById('imageInput').files[0];
-      const imageName = document.getElementById('imageName').value;
 
-      if (!imageFile || !imageName) {
-        document.getElementById('status').innerText = "이미지를 선택하고 이름을 입력하세요.";
+      if (!imageFile) {
+        document.getElementById('status').innerText = "이미지를 선택하세요.";
         return;
       }
 
       try {
-        // Firestore에서 중복된 이름 확인
-        const docRef = doc(db, 'images', imageName);
-        const docSnap = await getDoc(docRef);
-
-        let uniqueImageName = imageName;
-
-        // 이름이 중복되면 UUID 생성
-        if (docSnap.exists()) {
-          uniqueImageName = uuidv4();  // UUID로 고유 이름 생성
-        }
+        const uniqueImageName = generateRandomString(6); // 6자리 랜덤 문자열로 이름 생성
 
         // Firebase Storage에 이미지 업로드
-        const storageRef = ref(storage, `${uniqueImageName}`);
+        const storageRef = ref(storage, uniqueImageName);
         await uploadBytes(storageRef, imageFile);
         const downloadURL = await getDownloadURL(storageRef);
 
-        // Firestore에 이미지 정보 저장 (기존 이름과 매칭)
-        await setDoc(doc(db, 'images', imageName), { url: downloadURL });
-        document.getElementById('status').innerText = `업로드 성공! 이미지 URL: ${downloadURL}`;
+        // Firestore에 이미지 정보 저장
+        await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
+        document.getElementById('status').innerText = `업로드 성공! URL: ${window.location.origin}/name?=${uniqueImageName}`;
       } catch (error) {
         console.error("업로드 실패:", error);
         document.getElementById('status').innerText = "업로드에 실패했습니다! 에러: " + error.message;
       }
     });
+
+    // URL에서 이미지 이름 추출 및 이미지 표시
+    const urlParams = new URLSearchParams(window.location.search);
+    const imageName = urlParams.get('name');
+
+    if (imageName) {
+      const storageRef = ref(storage, imageName);
+      getDownloadURL(storageRef).then((url) => {
+        const img = document.createElement('img');
+        img.src = url;
+        document.body.appendChild(img);
+      }).catch((error) => {
+        console.error("이미지 로드 실패:", error);
+      });
+    }
   </script>
 </body>
 </html>
