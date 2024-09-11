@@ -5,127 +5,100 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Image Upload</title>
   <style>
-body {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* 위쪽 정렬을 유지 */
-  height: 100vh;
-  flex-direction: column;
-  margin: 0;
-  padding: 20px;
-  overflow: auto; /* 스크롤을 허용 */
-}
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      flex-direction: column;
+      margin: 0;
+      padding: 20px;
+      overflow: auto; /* 스크롤을 허용 */
+    }
 
-.upload-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+    .upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-.custom-file-upload {
-  display: inline-block;
-  background-color: #007BFF;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 10px 20px;
-  margin: 20px 0;
-  width: 600px;
-  height: 61px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-  font-weight: bold;
-  font-size: 18px;
-  text-align: center;
-}
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 20px;
+      margin: 20px 0;
+      width: 600px;
+      height: 61px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+    }
 
-.custom-file-upload:hover {
-  background-color: #005BDD;
-  transform: translateY(2px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+    button:hover {
+      background-color: #005BDD;
+      transform: translateY(2px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
 
-.custom-file-upload:active {
-  background-color: #0026a3;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+    button:active {
+      background-color: #0026a3;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
 
-#fileInput {
-  display: none;
-}
+    #fileNameDisplay {
+      font-size: 16px;
+      margin-top: 10px;
+      color: #333;
+    }
 
-button {
-  background-color: #007BFF;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 10px 20px;
-  margin: 20px 0;
-  width: 600px;
-  height: 61px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-  font-weight: bold;
-  font-size: 18px;
-  text-align: center;
-}
+    #linkBox {
+      width: 500px;
+      height: 40px;
+      margin: 20px 0;
+      font-size: 16px;
+      padding: 10px;
+      text-align: center;
+    }
 
-button:hover {
-  background-color: #005BDD;
-  transform: translateY(2px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+    .copy-button {
+      background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
+      background-size: contain;
+      border: none;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
 
-button:active {
-  background-color: #0026a3;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+    .link-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-#linkBox {
-  width: 500px;
-  height: 40px;
-  margin: 20px 0;
-  font-size: 16px;
-  padding: 10px;
-  text-align: center;
-}
-
-.copy-button {
-  background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
-  background-size: contain;
-  border: none;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  margin-left: 10px;
-  vertical-align: middle;
-}
-
-.link-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#imageContainer img {
-  max-width: 66.6vw; /* 화면 가로의 2/3 차지 */
-  max-height: 80vh; /* 화면 세로의 80%까지 차지 */
-  height: auto; /* 비율 유지 */
-  display: block;
-  margin: 20px auto;
-}
+    #imageContainer img {
+      max-width: 66.6vw; /* 화면 가로의 2/3 차지 */
+      max-height: 80vh; /* 화면 세로의 80%까지 차지 */
+      height: auto; /* 비율 유지 */
+      display: block;
+      margin: 20px auto;
+    }
   </style>
 </head>
 <body>
   <div class="upload-container">
     <h1>Upload an Image</h1>
 
-    <label for="fileInput" class="custom-file-upload">
-      Select File
-    </label>
-    <input type="file" id="fileInput" accept="image/*">
+    <button id="fileSelectButton">Select File</button>
+    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+    <div id="fileNameDisplay">No file selected</div>
 
     <button id="uploadButton">Upload</button>
 
@@ -144,7 +117,7 @@ button:active {
   <!-- Firebase 및 업로드 스크립트 포함 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
@@ -172,7 +145,23 @@ button:active {
     });
 
     const fileInput = document.getElementById('fileInput');
+    const fileSelectButton = document.getElementById('fileSelectButton');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
     const uploadButton = document.getElementById('uploadButton');
+
+    // 파일 선택 버튼 클릭 시 파일 입력 열기
+    fileSelectButton.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // 파일 선택 시 파일명 표시
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileNameDisplay.innerText = fileInput.files[0].name;
+      } else {
+        fileNameDisplay.innerText = "No file selected";
+      }
+    });
 
     // 이미지 업로드 처리
     uploadButton.addEventListener('click', async () => {
