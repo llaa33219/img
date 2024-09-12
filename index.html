@@ -272,10 +272,6 @@
             displayImage(downloadURL);
             hideUploadUI();
           })
-          .catch((error) => {
-            console.error("이미지 로드 실패:", error);
-            document.getElementById('status').innerText = "이미지 로드 실패: 이미지가 존재하지 않습니다.";
-          });
       } else {
         // No image name in URL, meaning no image to load, clear the error message
         document.getElementById('status').innerText = '';
