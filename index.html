@@ -285,6 +285,7 @@
       imageContainer.innerHTML = '';
       imageContainer.appendChild(imgElement);
 
+      // Event listener to toggle size
       imgElement.addEventListener('click', function () {
         if (imgElement.classList.contains('expanded')) {
           imgElement.classList.remove('expanded');
@@ -293,7 +294,22 @@
         }
       });
 
-      imgElement.addEventListener('mouseover', function () {
+      // Update cursor based on current state
+      imgElement.addEventListener('mouseenter', function () {
+        if (imgElement.classList.contains('expanded')) {
+          imgElement.style.cursor = 'zoom-out'; // Use "-" icon when expanded
+        } else {
+          imgElement.style.cursor = 'zoom-in'; // Use "+" icon when not expanded
+        }
+      });
+
+      // Ensure cursor updates when leaving and re-entering the image area
+      imgElement.addEventListener('mouseleave', function () {
+        imgElement.style.cursor = '';
+      });
+
+      // Ensure cursor updates dynamically even after toggling size
+      imgElement.addEventListener('mousemove', function () {
         if (imgElement.classList.contains('expanded')) {
           imgElement.style.cursor = 'zoom-out';
         } else {
@@ -302,21 +318,6 @@
       });
     }
 
-
-    function hideUploadUI() {
-      uploadContainer.classList.add('hidden');
-      toggleButton.style.display = 'flex';
-    }
-
-    toggleButton.addEventListener('click', () => {
-      if (uploadContainer.classList.contains('hidden')) {
-        uploadContainer.classList.remove('hidden');
-        toggleButton.innerText = '-';
-      } else {
-        uploadContainer.classList.add('hidden');
-        toggleButton.innerText = '+';
-      }
-    });
 
     window.onload = loadImageFromUrl;
   </script>
