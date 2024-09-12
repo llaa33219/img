@@ -282,39 +282,6 @@
       }
     }
 
-    // Function to display the uploaded image
-    function displayImage(url) {
-      const imgElement = document.createElement('img');
-      imgElement.src = url;
-      const imageContainer = document.getElementById('imageContainer');
-      imageContainer.innerHTML = ''; // Clear previous images
-      imageContainer.appendChild(imgElement);
-
-      imgElement.addEventListener('click', function () {
-        if (imgElement.classList.contains('expanded')) {
-          imgElement.classList.remove('expanded');
-        } else {
-          imgElement.classList.add('expanded');
-        }
-      });
-
-      imgElement.addEventListener('mouseenter', function () {
-        if (imgElement.classList.contains('expanded')) {
-          imgElement.style.cursor = 'zoom-out';
-        } else {
-          imgElement.style.cursor = 'zoom-in';
-        }
-      });
-
-      imgElement.addEventListener('mousemove', function () {
-        if (imgElement.classList.contains('expanded')) {
-          imgElement.style.cursor = 'zoom-out';
-        } else {
-          imgElement.style.cursor = 'zoom-in';
-        }
-      });
-    }
-
 
     function displayImage(url) {
       const imgElement = document.createElement('img');
