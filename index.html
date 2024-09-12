@@ -13,7 +13,7 @@
       flex-direction: column;
       margin: 0;
       padding: 20px;
-      overflow: auto; /* 스크롤을 허용 */
+      overflow: auto;
     }
 
     .upload-container {
@@ -83,77 +83,91 @@
     }
 
     #imageContainer img {
-      max-width: 66.6vw; /* 화면 가로의 2/3 차지 */
-      max-height: 80vh; /* 화면 세로의 80%까지 차지 */
-      height: auto; /* 비율 유지 */
+      max-width: 66.6vw;
+      max-height: 80vh;
+      height: auto;
       display: block;
       margin: 20px auto;
     }
+    
     .container {
-            text-align: center;
+      text-align: center;
     }
 
     .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-        font-size: 30px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 30px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
 
     .header-content img {
-        margin-right: 20px;
+      margin-right: 20px;
+    }
+
+    /* 새로 추가된 + 버튼 */
+    .toggle-button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 24px;
+      margin-left: 20px;
+    }
+
+    .hidden {
+      display: none;
     }
 
     @media (max-width: 768px) {
-    button {
-      width: 300px;
+      button {
+        width: 300px;
+      }
+      #linkBox {
+        width: 200px;
+      }
+      .header-content {
+        font-size: 16px;
+      }
     }
-    #linkBox {
-      width: 200px;
-    }
-    .header-content {
-      font-size: 16px;
-    }
-    }
-
   </style>
 </head>
 <body>
   <div class="header-content">
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
+    <!-- + 버튼 -->
+    <button class="toggle-button" id="toggleButton">+</button>
   </div>
-  <div class="upload-container">
-
+  
+  <div class="upload-container" id="uploadContainer">
     <button id="fileSelectButton">파일 선택</button>
     <input type="file" id="fileInput" accept="image/*" style="display: none;">
-
     <div id="fileNameDisplay">파일 선택 안됨</div>
-
     <button id="uploadButton">업로드</button>
-
     <p id="status"></p>
-
-    <!-- 링크 텍스트 박스와 복사 버튼을 포함한 컨테이너 -->
     <div class="link-container">
       <input type="text" id="linkBox" readonly>
       <button class="copy-button" id="copyButton"></button>
     </div>
-
-    <!-- 이미지를 표시할 컨테이너 -->
-    <div id="imageContainer"></div>
   </div>
 
-  <!-- Firebase 및 업로드 스크립트 포함 -->
+  <div id="imageContainer"></div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
     const firebaseConfig = {
       apiKey: "AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE",
       authDomain: "imgshare-2.firebaseapp.com",
@@ -180,6 +194,8 @@
     const fileSelectButton = document.getElementById('fileSelectButton');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
     const uploadButton = document.getElementById('uploadButton');
+    const uploadContainer = document.getElementById('uploadContainer');
+    const toggleButton = document.getElementById('toggleButton');
 
     // 파일 선택 버튼 클릭 시 파일 입력 열기
     fileSelectButton.addEventListener('click', () => {
@@ -195,7 +211,6 @@
       }
     });
 
-   // 이미지 업로드 처리
     uploadButton.addEventListener('click', async () => {
       const imageFile = fileInput.files[0];
 
@@ -204,47 +219,31 @@
         return;
       }
 
-      // 허용된 파일 확장자 목록
       const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
-
-      // 파일 확장자 추출
       const fileExtension = imageFile.name.split('.').pop().toLowerCase();
 
-      // 파일 확장자가 허용되지 않은 경우
       if (!allowedExtensions.includes(fileExtension)) {
-        document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다. (.png, .bmp, .jpg, .jpeg, .webp, .gif만 가능합니다)";
+        document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
         return;
       }
 
       try {
-        // 업로드 중 메시지 표시
         document.getElementById('status').innerText = "업로드 중...";
-
-        // 임의의 짧은 이름 생성
-        const uniqueImageName = Math.random().toString(36).substring(2, 8); // 6자리 임의의 문자열 생성
-
-        // Firebase Storage에 이미지 업로드
+        const uniqueImageName = Math.random().toString(36).substring(2, 8);
         const storageRef = ref(storage, uniqueImageName);
         await uploadBytes(storageRef, imageFile);
         const downloadURL = await getDownloadURL(storageRef);
-
-        // Firestore에 이미지 정보 저장
         await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
-
-        // 업로드 성공 메시지 및 URL 텍스트 박스에 링크 표시
         document.getElementById('status').innerText = "업로드 성공!";
         const imageUrl = `https://bloupla.net/img/?=${uniqueImageName}`;
-        document.getElementById('linkBox').value = imageUrl; // 텍스트 박스에 링크 표시
-
-        // 업로드된 이미지 화면에 표시
+        document.getElementById('linkBox').value = imageUrl;
         displayImage(downloadURL);
       } catch (error) {
         console.error("업로드 실패:", error);
-        document.getElementById('status').innerText = "업로드에 실패했습니다! 에러: " + error.message;
+        document.getElementById('status').innerText = "업로드 실패: " + error.message;
       }
     });
 
-    // 텍스트 박스의 내용을 복사하는 함수
     document.getElementById('copyButton').addEventListener('click', () => {
       const linkBox = document.getElementById('linkBox');
       linkBox.select();
@@ -252,37 +251,48 @@
       alert('링크가 복사되었습니다!');
     });
 
-    // URL 파라미터에서 이미지 이름을 가져와 로딩하는 함수
     function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
-      const imageName = urlParams.get('');  // URL에 "?=이미지이름" 형식에서 이미지 이름 추출
+      const imageName = urlParams.get('');
 
       if (imageName) {
         const storageRef = ref(storage, imageName);
         getDownloadURL(storageRef)
           .then((downloadURL) => {
-            // 이미지 화면에 표시
             displayImage(downloadURL);
+            hideUploadUI();
           })
           .catch((error) => {
             console.error("이미지 로드 실패:", error);
-            document.getElementById('status').innerText = "이미지를 불러오는 데 실패했습니다!";
+            document.getElementById('status').innerText = "이미지 로드 실패.";
           });
       }
     }
 
-    // 이미지를 화면에 표시하는 함수
     function displayImage(url) {
       const imgElement = document.createElement('img');
       imgElement.src = url;
       const imageContainer = document.getElementById('imageContainer');
-      imageContainer.innerHTML = ''; // 이전 이미지 제거
+      imageContainer.innerHTML = '';
       imageContainer.appendChild(imgElement);
     }
 
-    // 페이지가 로드되면 URL을 확인하여 이미지 로딩
-    window.onload = loadImageFromUrl;
+    function hideUploadUI() {
+      uploadContainer.classList.add('hidden');
+      toggleButton.style.display = 'flex';
+    }
 
+    toggleButton.addEventListener('click', () => {
+      if (uploadContainer.classList.contains('hidden')) {
+        uploadContainer.classList.remove('hidden');
+        toggleButton.innerText = '-';
+      } else {
+        uploadContainer.classList.add('hidden');
+        toggleButton.innerText = '+';
+      }
+    });
+
+    window.onload = loadImageFromUrl;
   </script>
 </body>
 </html>
