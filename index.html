@@ -260,6 +260,7 @@
       alert('링크가 복사되었습니다!');
     });
 
+    // Load the image from URL (if exists)
     function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
       const imageName = urlParams.get('');
@@ -273,10 +274,47 @@
           })
           .catch((error) => {
             console.error("이미지 로드 실패:", error);
-            document.getElementById('status').innerText = "이미지 로드 실패.";
+            document.getElementById('status').innerText = "이미지 로드 실패: 이미지가 존재하지 않습니다.";
           });
+      } else {
+        // No image name in URL, meaning no image to load, clear the error message
+        document.getElementById('status').innerText = '';
       }
     }
+
+    // Function to display the uploaded image
+    function displayImage(url) {
+      const imgElement = document.createElement('img');
+      imgElement.src = url;
+      const imageContainer = document.getElementById('imageContainer');
+      imageContainer.innerHTML = ''; // Clear previous images
+      imageContainer.appendChild(imgElement);
+
+      imgElement.addEventListener('click', function () {
+        if (imgElement.classList.contains('expanded')) {
+          imgElement.classList.remove('expanded');
+        } else {
+          imgElement.classList.add('expanded');
+        }
+      });
+
+      imgElement.addEventListener('mouseenter', function () {
+        if (imgElement.classList.contains('expanded')) {
+          imgElement.style.cursor = 'zoom-out';
+        } else {
+          imgElement.style.cursor = 'zoom-in';
+        }
+      });
+
+      imgElement.addEventListener('mousemove', function () {
+        if (imgElement.classList.contains('expanded')) {
+          imgElement.style.cursor = 'zoom-out';
+        } else {
+          imgElement.style.cursor = 'zoom-in';
+        }
+      });
+    }
+
 
     function displayImage(url) {
       const imgElement = document.createElement('img');
