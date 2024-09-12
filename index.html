@@ -88,7 +88,16 @@
       max-height: 50vh;
       display: block;
       margin: 20px auto;
+      cursor: zoom-in;
+      transition: all 0.3s ease;
     }
+
+    #imageContainer img.expanded {
+      max-width: 80vw;
+      max-height: 80vh;
+      cursor: zoom-out;
+    }
+
     
     .container {
       text-align: center;
@@ -275,7 +284,24 @@
       const imageContainer = document.getElementById('imageContainer');
       imageContainer.innerHTML = '';
       imageContainer.appendChild(imgElement);
+
+      imgElement.addEventListener('click', function () {
+        if (imgElement.classList.contains('expanded')) {
+          imgElement.classList.remove('expanded');
+        } else {
+          imgElement.classList.add('expanded');
+        }
+      });
+
+      imgElement.addEventListener('mouseover', function () {
+        if (imgElement.classList.contains('expanded')) {
+          imgElement.style.cursor = 'zoom-out';
+        } else {
+          imgElement.style.cursor = 'zoom-in';
+        }
+      });
     }
+
 
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
