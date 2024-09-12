@@ -85,7 +85,6 @@
     #imageContainer img {
       max-width: 50vw;
       max-height: 80vh;
-      object-fit: contain;
       display: block;
       margin: 20px auto;
     }
@@ -140,13 +139,13 @@
     }
   </style>
 </head>
+<div class="header-content">
+  <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
+  <h1>이미지 공유</h1>
+  <!-- + 버튼 -->
+  <button class="toggle-button" id="toggleButton">+</button>
+</div>
 <body>
-  <div class="header-content">
-    <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
-    <h1>이미지 공유</h1>
-    <!-- + 버튼 -->
-    <button class="toggle-button" id="toggleButton">+</button>
-  </div>
   
   <div class="upload-container" id="uploadContainer">
     <button id="fileSelectButton">파일 선택</button>
