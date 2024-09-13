@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이미지 공유</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <img id="firebaseImage" src="" alt="이미지">
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+
+    // Firebase 설정
+    const firebaseConfig = {
+      apiKey: "AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE",
+      authDomain: "imgshare-2.firebaseapp.com",
+      projectId: "imgshare-2",
+      storageBucket: "imgshare-2.appspot.com",
+      messagingSenderId: "669732206491",
+      appId: "1:669732206491:web:c57c3238a46b37c86c133e",
+      measurementId: "G-C97WZLE7J0"
+    };
+
+    // Firebase 초기화
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+
+    // URL에서 이미지 이름을 얻는 함수
+    function loadImageFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const imageName = urlParams.get('name'); // 'name' 값으로 이미지 이름 받기
+
+      if (imageName) {
+        const storageRef = ref(storage, imageName);
+        getDownloadURL(storageRef)
+          .then((downloadURL) => {
+            document.getElementById('firebaseImage').src = downloadURL; // 이미지 표시
+          })
+          .catch((error) => {
+            console.error("이미지 로드 실패:", error);
+          });
+      } else {
+        console.error("이미지 이름이 URL에 없습니다.");
+      }
+    }
+
+    // 페이지 로드 시 이미지 로드
+    window.onload = loadImageFromUrl;
+  </script>
+</body>
+</html>
