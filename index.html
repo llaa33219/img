@@ -293,31 +293,28 @@
         } else {
           imgElement.classList.add('expanded');
         }
+        // Immediately update cursor when size is toggled
+        updateCursor();
       });
 
       // Update cursor based on current state
-      imgElement.addEventListener('mouseenter', function () {
+      function updateCursor() {
         if (imgElement.classList.contains('expanded')) {
           imgElement.style.cursor = 'zoom-out'; // Use "-" icon when expanded
         } else {
           imgElement.style.cursor = 'zoom-in'; // Use "+" icon when not expanded
         }
-      });
+      }
+
+      imgElement.addEventListener('mouseenter', updateCursor);
 
       // Ensure cursor updates when leaving and re-entering the image area
-      imgElement.addEventListener('mouseleave', function () {
-        imgElement.style.cursor = '';
-      });
+      imgElement.addEventListener('mouseleave', updateCursor);
 
       // Ensure cursor updates dynamically even after toggling size
-      imgElement.addEventListener('mousemove', function () {
-        if (imgElement.classList.contains('expanded')) {
-          imgElement.style.cursor = 'zoom-out';
-        } else {
-          imgElement.style.cursor = 'zoom-in';
-        }
-      });
+      imgElement.addEventListener('mousemove', updateCursor);
     }
+
 
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
