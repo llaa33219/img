@@ -319,6 +319,21 @@
       });
     }
 
+    function hideUploadUI() {
+      uploadContainer.classList.add('hidden');
+      toggleButton.style.display = 'flex';
+    }
+
+    toggleButton.addEventListener('click', () => {
+      if (uploadContainer.classList.contains('hidden')) {
+        uploadContainer.classList.remove('hidden');
+        toggleButton.innerText = '-';
+      } else {
+        uploadContainer.classList.add('hidden');
+        toggleButton.innerText = '+';
+      }
+    });
+
 
     window.onload = loadImageFromUrl;
   </script>
