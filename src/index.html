@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <img id="firebaseImage" src="" alt="이미지">
+  <div id="imageContainer"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
@@ -41,16 +41,16 @@
     const app = initializeApp(firebaseConfig);
     const storage = getStorage(app);
 
-    // URL에서 이미지 이름을 얻는 함수
+    // URL에서 'name' 파라미터로 이미지 이름을 받아서 Firebase에서 이미지 불러오기
     function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
-      const imageName = urlParams.get('name'); // 'name' 값으로 이미지 이름 받기
+      const imageName = urlParams.get('name');  // 예: https://yourdomain.com/?name=myImage
 
       if (imageName) {
         const storageRef = ref(storage, imageName);
         getDownloadURL(storageRef)
           .then((downloadURL) => {
-            document.getElementById('firebaseImage').src = downloadURL; // 이미지 표시
+            displayImage(downloadURL);  // 이미지 불러와서 화면에 표시
           })
           .catch((error) => {
             console.error("이미지 로드 실패:", error);
@@ -58,6 +58,15 @@
       } else {
         console.error("이미지 이름이 URL에 없습니다.");
       }
+    }
+
+    // 이미지 표시
+    function displayImage(url) {
+      const imgElement = document.createElement('img');
+      imgElement.src = url;
+      const imageContainer = document.getElementById('imageContainer');
+      imageContainer.innerHTML = '';
+      imageContainer.appendChild(imgElement);
     }
 
     // 페이지 로드 시 이미지 로드
