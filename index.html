@@ -6,11 +6,12 @@
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>이미지 공유</title>
   <style>
+    /* 기존 스타일은 그대로 유지 */
     body {
       display: flex;
       flex-direction: column;
-      justify-content: flex-start; /* 위쪽 정렬 */
-      align-items: center; /* 좌우 중앙 정렬 */
+      justify-content: flex-start;
+      align-items: center;
       height: 100vh;
       margin: 0;
       padding: 20px;
@@ -104,7 +105,6 @@
       object-fit: contain;  /* 확대 상태에서도 비율 유지 */
     }
 
-    
     .container {
       text-align: center;
     }
@@ -122,7 +122,6 @@
       margin-right: 20px;
     }
 
-    /* 새로 추가된 + 버튼 */
     .toggle-button {
       background-color: #28a745;
       color: white;
@@ -158,14 +157,13 @@
 <div class="header-content">
   <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
   <h1>이미지 공유</h1>
-  <!-- + 버튼 -->
   <button class="toggle-button" id="toggleButton">+</button>
 </div>
 <body>
   
   <div class="upload-container" id="uploadContainer">
     <button id="fileSelectButton">파일 선택</button>
-    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    <input type="file" id="fileInput" accept="image/*" style="display: none;" multiple> <!-- multiple 속성 추가 -->
     <div id="fileNameDisplay">파일 선택 안됨</div>
     <button id="uploadButton">업로드</button>
     <p id="status"></p>
@@ -179,7 +177,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
@@ -220,45 +218,52 @@
     // 파일 선택 시 파일명 표시
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
-        fileNameDisplay.innerText = fileInput.files[0].name;
+        const fileNames = Array.from(fileInput.files).map(file => file.name).join(', ');
+        fileNameDisplay.innerText = fileNames;
       } else {
         fileNameDisplay.innerText = "No file selected";
       }
     });
 
+    // 파일 업로드
     uploadButton.addEventListener('click', async () => {
-      const imageFile = fileInput.files[0];
-
-      if (!imageFile) {
+      const imageFiles = fileInput.files;
+      if (imageFiles.length === 0) {
         document.getElementById('status').innerText = "이미지를 선택하세요.";
         return;
       }
 
       const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
-      const fileExtension = imageFile.name.split('.').pop().toLowerCase();
+      let imageUrls = [];
 
-      if (!allowedExtensions.includes(fileExtension)) {
-        document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
-        return;
+      for (const imageFile of imageFiles) {
+        const fileExtension = imageFile.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(fileExtension)) {
+          document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
+          return;
+        }
+
+        try {
+          document.getElementById('status').innerText = "업로드 중...";
+          const uniqueImageName = Math.random().toString(36).substring(2, 8);
+          const storageRef = ref(storage, uniqueImageName);
+          await uploadBytes(storageRef, imageFile);
+          const downloadURL = await getDownloadURL(storageRef);
+          await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
+          imageUrls.push(`https://bloupla.net/img/?=${uniqueImageName}`);
+        } catch (error) {
+          console.error("업로드 실패:", error);
+          document.getElementById('status').innerText = "업로드 실패: " + error.message;
+          return;
+        }
       }
 
-      try {
-        document.getElementById('status').innerText = "업로드 중...";
-        const uniqueImageName = Math.random().toString(36).substring(2, 8);
-        const storageRef = ref(storage, uniqueImageName);
-        await uploadBytes(storageRef, imageFile);
-        const downloadURL = await getDownloadURL(storageRef);
-        await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
-        document.getElementById('status').innerText = "업로드 성공!";
-        const imageUrl = `https://bloupla.net/img/?=${uniqueImageName}`;
-        document.getElementById('linkBox').value = imageUrl;
-        displayImage(downloadURL);
-      } catch (error) {
-        console.error("업로드 실패:", error);
-        document.getElementById('status').innerText = "업로드 실패: " + error.message;
-      }
+      document.getElementById('status').innerText = "업로드 성공!";
+      const imageUrl = imageUrls.join(', ');
+      document.getElementById('linkBox').value = imageUrl;
     });
 
+    // 링크 복사 기능
     document.getElementById('copyButton').addEventListener('click', () => {
       const linkBox = document.getElementById('linkBox');
       linkBox.select();
@@ -266,77 +271,54 @@
       alert('링크가 복사되었습니다!');
     });
 
-    // Load the image from URL (if exists)
+    // URL에서 이미지 로드
     function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
-      const imageName = urlParams.get('');
+      const imageNames = urlParams.get('').split(',');
 
-      if (imageName) {
-        const storageRef = ref(storage, imageName);
-        getDownloadURL(storageRef)
-          .then((downloadURL) => {
+      if (imageNames.length > 0) {
+        const imageContainer = document.getElementById('imageContainer');
+        imageContainer.innerHTML = '';
+
+        imageNames.forEach(imageName => {
+          const storageRef = ref(storage, imageName.trim());
+          getDownloadURL(storageRef).then((downloadURL) => {
             displayImage(downloadURL);
-            hideUploadUI();
-          })
-      } else {
-        // No image name in URL, meaning no image to load, clear the error message
-        document.getElementById('status').innerText = '';
+          });
+        });
       }
     }
 
-
+    // 이미지 표시 함수
     function displayImage(url) {
       const imgElement = document.createElement('img');
       imgElement.src = url;
       const imageContainer = document.getElementById('imageContainer');
-      imageContainer.innerHTML = '';
       imageContainer.appendChild(imgElement);
 
-      // Event listener to toggle size
+      // 확대 기능
       imgElement.addEventListener('click', function () {
         if (imgElement.classList.contains('expanded')) {
           imgElement.classList.remove('expanded');
         } else {
           imgElement.classList.add('expanded');
         }
-        // Immediately update cursor when size is toggled
         updateCursor();
       });
 
-      // Update cursor based on current state
+      // 이미지에 마우스 커서 업데이트 (줌 인/줌 아웃)
       function updateCursor() {
         if (imgElement.classList.contains('expanded')) {
-          imgElement.style.cursor = 'zoom-out'; // Use "-" icon when expanded
+          imgElement.style.cursor = 'zoom-out';
         } else {
-          imgElement.style.cursor = 'zoom-in'; // Use "+" icon when not expanded
+          imgElement.style.cursor = 'zoom-in';
         }
       }
 
       imgElement.addEventListener('mouseenter', updateCursor);
-
-      // Ensure cursor updates when leaving and re-entering the image area
       imgElement.addEventListener('mouseleave', updateCursor);
-
-      // Ensure cursor updates dynamically even after toggling size
       imgElement.addEventListener('mousemove', updateCursor);
     }
-
-
-    function hideUploadUI() {
-      uploadContainer.classList.add('hidden');
-      toggleButton.style.display = 'flex';
-    }
-
-    toggleButton.addEventListener('click', () => {
-      if (uploadContainer.classList.contains('hidden')) {
-        uploadContainer.classList.remove('hidden');
-        toggleButton.innerText = '-';
-      } else {
-        uploadContainer.classList.add('hidden');
-        toggleButton.innerText = '+';
-      }
-    });
-
 
     window.onload = loadImageFromUrl;
   </script>
