@@ -225,7 +225,38 @@
       }
     });
 
-    // 파일 업로드
+    // 클립보드에서 이미지 붙여넣기 처리
+    document.addEventListener('paste', (event) => {
+      const clipboardItems = event.clipboardData.items;
+      let imageFile = null;
+
+      for (const item of clipboardItems) {
+        if (item.type.indexOf('image') !== -1) {
+          imageFile = item.getAsFile();
+          break;
+        }
+      }
+
+      if (imageFile) {
+        const fileExtension = imageFile.name.split('.').pop().toLowerCase();
+        const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+
+        if (!allowedExtensions.includes(fileExtension)) {
+          document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
+          return;
+        }
+
+        // 파일 선택된 것처럼 표시
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(imageFile);
+        fileInput.files = dataTransfer.files;
+        fileNameDisplay.innerText = imageFile.name;
+        document.getElementById('status').innerText = "클립보드에서 이미지가 선택되었습니다.";
+      } else {
+        document.getElementById('status').innerText = "클립보드에 이미지가 없습니다.";
+      }
+    });
+
     // 파일 업로드
     uploadButton.addEventListener('click', async () => {
       const imageFiles = fileInput.files;
@@ -251,7 +282,7 @@
           await uploadBytes(storageRef, imageFile);
           const downloadURL = await getDownloadURL(storageRef);
           await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
-          imageNames.push(uniqueImageName); // 이미지 이름만 저장
+          imageNames.push(uniqueImageName);
         } catch (error) {
           console.error("업로드 실패:", error);
           document.getElementById('status').innerText = "업로드 실패: " + error.message;
@@ -260,9 +291,10 @@
       }
 
       document.getElementById('status').innerText = "업로드 성공!";
-      const imageUrl = `https://bloupla.net/img/?=${imageNames.join(',')}`; // 쉼표로 구분된 URL 생성
+      const imageUrl = `https://bloupla.net/img/?=${imageNames.join(',')}`;
       document.getElementById('linkBox').value = imageUrl;
     });
+
 
     // 링크 복사 기능
     document.getElementById('copyButton').addEventListener('click', () => {
