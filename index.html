@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
-  <title>이미지 및 영상 공유</title>
+  <title>이미지 공유</title>
   <style>
-    /* 기존 스타일 유지 */
+    /* 기존 스타일은 그대로 유지 */
     body {
       display: flex;
       flex-direction: column;
@@ -84,8 +84,8 @@
       align-items: center;
     }
 
-    #mediaContainer img, #mediaContainer video {
-      width: 100vw;
+    #imageContainer img {
+      width: 100vw;  /* 가로 크기를 강제로 화면 전체로 조정 */
       height: auto;
       max-width: 50vw;
       max-height: 50vh;
@@ -93,16 +93,16 @@
       margin: 20px auto;
       cursor: zoom-in;
       transition: all 0.3s ease;
-      object-fit: contain;
+      object-fit: contain;  /* 비율 유지하며 화면에 맞춤 */
     }
 
-    #mediaContainer img.expanded, #mediaContainer video.expanded {
-      width: 100vw;
+    #imageContainer img.expanded {
+      width: 100vw;  /* 확대 시에도 가로를 화면 전체로 조정 */
       height: auto;
       max-height: 100vh;
       max-width: 80vw;
       cursor: zoom-out;
-      object-fit: contain;
+      object-fit: contain;  /* 확대 상태에서도 비율 유지 */
     }
 
     .container {
@@ -156,14 +156,14 @@
 </head>
 <div class="header-content">
   <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
-  <h1>이미지 및 영상 공유</h1>
+  <h1>이미지 공유</h1>
   <button class="toggle-button" id="toggleButton">+</button>
 </div>
 <body>
   
   <div class="upload-container" id="uploadContainer">
     <button id="fileSelectButton">파일 선택</button>
-    <input type="file" id="fileInput" accept="image/*, video/*" style="display: none;" multiple> <!-- 이미지와 영상 파일 허용 -->
+    <input type="file" id="fileInput" accept="image/*" style="display: none;" multiple> <!-- multiple 속성 추가 -->
     <div id="fileNameDisplay">파일 선택 안됨</div>
     <button id="uploadButton">업로드</button>
     <p id="status"></p>
@@ -173,7 +173,7 @@
     </div>
   </div>
 
-  <div id="mediaContainer"></div>
+  <div id="imageContainer"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
@@ -182,13 +182,13 @@
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID",
-      measurementId: "YOUR_MEASUREMENT_ID"
+      apiKey: "AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE",
+      authDomain: "imgshare-2.firebaseapp.com",
+      projectId: "imgshare-2",
+      storageBucket: "imgshare-2.appspot.com",
+      messagingSenderId: "669732206491",
+      appId: "1:669732206491:web:c57c3238a46b37c86c133e",
+      measurementId: "G-C97WZLE7J0"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -210,10 +210,12 @@
     const uploadContainer = document.getElementById('uploadContainer');
     const toggleButton = document.getElementById('toggleButton');
 
+    // 파일 선택 버튼 클릭 시 파일 입력 열기
     fileSelectButton.addEventListener('click', () => {
       fileInput.click();
     });
 
+    // 파일 선택 시 파일명 표시
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
         const fileNames = Array.from(fileInput.files).map(file => file.name).join(', ');
@@ -223,22 +225,51 @@
       }
     });
 
-    // 파일 선택 시 파일명 표시
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) {
-        const fileNames = Array.from(fileInput.files).map(file => file.name).join(', ');
-        fileNameDisplay.innerText = fileNames;
+    // 클립보드에서 이미지 붙여넣기 처리
+    document.addEventListener('paste', (event) => {
+      const clipboardItems = event.clipboardData.items;
+      let imageFile = null;
+
+      for (const item of clipboardItems) {
+        if (item.type.indexOf('image') !== -1) {
+          imageFile = item.getAsFile();
+          break;
+        }
+      }
+
+      if (imageFile) {
+        const fileExtension = imageFile.name.split('.').pop().toLowerCase();
+        const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+
+        if (!allowedExtensions.includes(fileExtension)) {
+          document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
+          return;
+        }
+
+        // 파일 선택된 것처럼 표시
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(imageFile);
+        fileInput.files = dataTransfer.files;
+        fileNameDisplay.innerText = imageFile.name;
+        document.getElementById('status').innerText = "클립보드에서 이미지가 선택되었습니다.";
       } else {
-        fileNameDisplay.innerText = "파일 선택 안됨";
+        document.getElementById('status').innerText = "클립보드에 이미지가 없습니다.";
       }
     });
 
+    // 파일 업로드
+    uploadButton.addEventListener('click', async () => {
+      const imageFiles = fileInput.files;
+      if (imageFiles.length === 0) {
+        document.getElementById('status').innerText = "이미지를 선택하세요.";
+        return;
+      }
 
-      const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif', 'mp4', 'avi', 'mov', 'webm', 'ogg'];
-      let mediaNames = [];
+      const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+      let imageNames = [];
 
-      for (const mediaFile of mediaFiles) {
-        const fileExtension = mediaFile.name.split('.').pop().toLowerCase();
+      for (const imageFile of imageFiles) {
+        const fileExtension = imageFile.name.split('.').pop().toLowerCase();
         if (!allowedExtensions.includes(fileExtension)) {
           document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
           return;
@@ -246,12 +277,12 @@
 
         try {
           document.getElementById('status').innerText = "업로드 중...";
-          const uniqueMediaName = Math.random().toString(36).substring(2, 8);
-          const storageRef = ref(storage, uniqueMediaName);
-          await uploadBytes(storageRef, mediaFile);
+          const uniqueImageName = Math.random().toString(36).substring(2, 8);
+          const storageRef = ref(storage, uniqueImageName);
+          await uploadBytes(storageRef, imageFile);
           const downloadURL = await getDownloadURL(storageRef);
-          await setDoc(doc(db, 'media', uniqueMediaName), { url: downloadURL });
-          mediaNames.push(uniqueMediaName);
+          await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
+          imageNames.push(uniqueImageName);
         } catch (error) {
           console.error("업로드 실패:", error);
           document.getElementById('status').innerText = "업로드 실패: " + error.message;
@@ -260,9 +291,12 @@
       }
 
       document.getElementById('status').innerText = "업로드 성공!";
-      const mediaUrl = `https://bloupla.net/media/?=${mediaNames.join(',')}`;
-      document.getElementById('linkBox').value = mediaUrl;
+      const imageUrl = `https://bloupla.net/img/?=${imageNames.join(',')}`;
+      document.getElementById('linkBox').value = imageUrl;
+    });
 
+
+    // 링크 복사 기능
     document.getElementById('copyButton').addEventListener('click', () => {
       const linkBox = document.getElementById('linkBox');
       linkBox.select();
@@ -270,35 +304,34 @@
       alert('링크가 복사되었습니다!');
     });
 
-    function loadMediaFromUrl() {
+    // URL에서 이미지 로드
+    function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
-      const mediaNames = urlParams.get('').split(',');
+      const imageNames = urlParams.get('').split(',');
 
-      if (mediaNames.length > 0) {
-        const mediaContainer = document.getElementById('mediaContainer');
-        mediaContainer.innerHTML = '';
+      if (imageNames.length > 0) {
+        const imageContainer = document.getElementById('imageContainer');
+        imageContainer.innerHTML = '';
 
-        mediaNames.forEach(mediaName => {
-          const storageRef = ref(storage, mediaName.trim());
+        imageNames.forEach(imageName => {
+          const storageRef = ref(storage, imageName.trim());
           getDownloadURL(storageRef).then((downloadURL) => {
-            const fileExtension = downloadURL.split('.').pop().toLowerCase();  // 확장자 비교를 위해 toLowerCase() 추가
-            if (['mp4', 'avi', 'mov', 'webm', 'ogg'].includes(fileExtension)) {
-              displayVideo(downloadURL);
-            } else {
-              displayImage(downloadURL);
-            }
+            displayImage(downloadURL);
           });
         });
 
+        // 업로드 UI 숨김 처리
         hideUploadUI();
       }
     }
 
+    // 업로드 UI 숨기는 함수
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
-      toggleButton.style.display = 'flex';
+      toggleButton.style.display = 'flex'; // 숨겨진 + 버튼 보이기
     }
 
+    // UI 표시/숨김 토글 버튼 클릭 시 처리
     toggleButton.addEventListener('click', () => {
       if (uploadContainer.classList.contains('hidden')) {
         uploadContainer.classList.remove('hidden');
@@ -309,12 +342,14 @@
       }
     });
 
+    // 이미지 표시 함수
     function displayImage(url) {
       const imgElement = document.createElement('img');
       imgElement.src = url;
-      const mediaContainer = document.getElementById('mediaContainer');
-      mediaContainer.appendChild(imgElement);
+      const imageContainer = document.getElementById('imageContainer');
+      imageContainer.appendChild(imgElement);
 
+      // 확대 기능
       imgElement.addEventListener('click', function () {
         if (imgElement.classList.contains('expanded')) {
           imgElement.classList.remove('expanded');
@@ -324,6 +359,7 @@
         updateCursor();
       });
 
+      // 이미지에 마우스 커서 업데이트 (줌 인/줌 아웃)
       function updateCursor() {
         if (imgElement.classList.contains('expanded')) {
           imgElement.style.cursor = 'zoom-out';
@@ -337,37 +373,7 @@
       imgElement.addEventListener('mousemove', updateCursor);
     }
 
-    function displayVideo(url) {
-      const videoElement = document.createElement('video');
-      videoElement.src = url;
-      videoElement.controls = true;
-      videoElement.style.cursor = 'pointer';
-      const mediaContainer = document.getElementById('mediaContainer');
-      mediaContainer.appendChild(videoElement);
-
-      videoElement.addEventListener('click', function () {
-        if (videoElement.classList.contains('expanded')) {
-          videoElement.classList.remove('expanded');
-        } else {
-          videoElement.classList.add('expanded');
-        }
-        updateCursor();
-      });
-
-      function updateCursor() {
-        if (videoElement.classList.contains('expanded')) {
-          videoElement.style.cursor = 'zoom-out';
-        } else {
-          videoElement.style.cursor = 'zoom-in';
-        }
-      }
-
-      videoElement.addEventListener('mouseenter', updateCursor);
-      videoElement.addEventListener('mouseleave', updateCursor);
-      videoElement.addEventListener('mousemove', updateCursor);
-    }
-
-    window.onload = loadMediaFromUrl;
+    window.onload = loadImageFromUrl;
   </script>
 </body>
 </html>
