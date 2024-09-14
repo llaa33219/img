@@ -239,7 +239,7 @@
 
       if (imageFile) {
         const fileExtension = imageFile.name.split('.').pop().toLowerCase();
-        const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+        const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif', 'mp4'];
 
         if (!allowedExtensions.includes(fileExtension)) {
           document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
