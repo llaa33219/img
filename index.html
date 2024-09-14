@@ -226,6 +226,7 @@
     });
 
     // 파일 업로드
+    // 파일 업로드
     uploadButton.addEventListener('click', async () => {
       const imageFiles = fileInput.files;
       if (imageFiles.length === 0) {
@@ -234,7 +235,7 @@
       }
 
       const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
-      let imageUrls = [];
+      let imageNames = [];
 
       for (const imageFile of imageFiles) {
         const fileExtension = imageFile.name.split('.').pop().toLowerCase();
@@ -250,7 +251,7 @@
           await uploadBytes(storageRef, imageFile);
           const downloadURL = await getDownloadURL(storageRef);
           await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
-          imageUrls.push(`https://bloupla.net/img/?=${uniqueImageName}`);
+          imageNames.push(uniqueImageName); // 이미지 이름만 저장
         } catch (error) {
           console.error("업로드 실패:", error);
           document.getElementById('status').innerText = "업로드 실패: " + error.message;
@@ -259,7 +260,7 @@
       }
 
       document.getElementById('status').innerText = "업로드 성공!";
-      const imageUrl = imageUrls.join(', ');
+      const imageUrl = `https://bloupla.net/img/?=${imageNames.join(',')}`; // 쉼표로 구분된 URL 생성
       document.getElementById('linkBox').value = imageUrl;
     });
 
