@@ -257,6 +257,27 @@
       }
     });
 
+
+
+    async function convertVideoToGif(file) {
+      // ffmpeg.js 로딩
+      if (!ffmpeg.isLoaded()) {
+        await ffmpeg.load();
+      }
+
+      // 입력 파일을 ffmpeg 파일 시스템에 로드
+      ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+
+      // ffmpeg 명령어로 GIF 변환 실행
+      await ffmpeg.run('-i', file.name, '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-t', '10', 'output.gif');
+
+      // 변환된 GIF 파일 가져오기
+      const data = ffmpeg.FS('readFile', 'output.gif');
+
+      // Blob을 생성하고 URL을 반환
+      return new Blob([data.buffer], { type: 'image/gif' });
+    }
+
     // 파일 업로드
     // 파일 업로드 이벤트 처리
     uploadButton.addEventListener('click', async () => {
@@ -318,24 +339,6 @@
       document.getElementById('linkBox').value = fileUrl;
     });
 
-    async function convertVideoToGif(file) {
-      // ffmpeg.js 로딩
-      if (!ffmpeg.isLoaded()) {
-        await ffmpeg.load();
-      }
-
-      // 입력 파일을 ffmpeg 파일 시스템에 로드
-      ffmpeg.FS('writeFile', file.name, await fetchFile(file));
-
-      // ffmpeg 명령어로 GIF 변환 실행
-      await ffmpeg.run('-i', file.name, '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-t', '10', 'output.gif');
-
-      // 변환된 GIF 파일 가져오기
-      const data = ffmpeg.FS('readFile', 'output.gif');
-
-      // Blob을 생성하고 URL을 반환
-      return new Blob([data.buffer], { type: 'image/gif' });
-    }
 
 
     // 링크 복사 기능
