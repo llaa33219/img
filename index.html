@@ -175,7 +175,7 @@
 
   <div id="imageContainer"></div>
 
-  <script type="module">
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.8" type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
@@ -239,7 +239,7 @@
 
       if (imageFile) {
         const fileExtension = imageFile.name.split('.').pop().toLowerCase();
-        const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif', 'mp4'];
+        const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
 
         if (!allowedExtensions.includes(fileExtension)) {
           document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
@@ -258,42 +258,84 @@
     });
 
     // 파일 업로드
+    // 파일 업로드 이벤트 처리
     uploadButton.addEventListener('click', async () => {
-      const imageFiles = fileInput.files;
-      if (imageFiles.length === 0) {
-        document.getElementById('status').innerText = "이미지를 선택하세요.";
+      const files = fileInput.files;
+      if (files.length === 0) {
+        document.getElementById('status').innerText = "파일을 선택하세요.";
         return;
       }
 
-      const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif', 'mp4'];
-      let imageNames = [];
+      const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+      const allowedVideoExtensions = ['mp4', 'avi', 'mkv'];
+      let fileUrls = [];
 
-      for (const imageFile of imageFiles) {
-        const fileExtension = imageFile.name.split('.').pop().toLowerCase();
-        if (!allowedExtensions.includes(fileExtension)) {
+      for (const file of files) {
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+
+        if (allowedImageExtensions.includes(fileExtension)) {
+          // 이미지 파일 업로드 (기존 방식)
+          try {
+            document.getElementById('status').innerText = "이미지 업로드 중...";
+            const uniqueImageName = Math.random().toString(36).substring(2, 8);
+            const storageRef = ref(storage, uniqueImageName);
+            await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(storageRef);
+            await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
+            fileUrls.push(uniqueImageName);
+          } catch (error) {
+            document.getElementById('status').innerText = "이미지 업로드 실패: " + error.message;
+            return;
+          }
+        } else if (allowedVideoExtensions.includes(fileExtension)) {
+          // 영상 파일 GIF 변환 후 업로드
+          try {
+            document.getElementById('status').innerText = "영상 변환 중...";
+            
+            // GIF 변환 함수 호출
+            const gifFile = await convertVideoToGif(file);
+            document.getElementById('status').innerText = "GIF 변환 완료! 업로드 중...";
+            
+            const uniqueGifName = Math.random().toString(36).substring(2, 8) + '.gif';
+            const storageRef = ref(storage, uniqueGifName);
+            await uploadBytes(storageRef, gifFile);
+            
+            const downloadURL = await getDownloadURL(storageRef);
+            await setDoc(doc(db, 'images', uniqueGifName), { url: downloadURL });
+            fileUrls.push(uniqueGifName);
+          } catch (error) {
+            document.getElementById('status').innerText = "GIF 변환 및 업로드 실패: " + error.message;
+            return;
+          }
+        } else {
           document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
-          return;
-        }
-
-        try {
-          document.getElementById('status').innerText = "업로드 중...";
-          const uniqueImageName = Math.random().toString(36).substring(2, 8);
-          const storageRef = ref(storage, uniqueImageName);
-          await uploadBytes(storageRef, imageFile);
-          const downloadURL = await getDownloadURL(storageRef);
-          await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
-          imageNames.push(uniqueImageName);
-        } catch (error) {
-          console.error("업로드 실패:", error);
-          document.getElementById('status').innerText = "업로드 실패: " + error.message;
           return;
         }
       }
 
-      document.getElementById('status').innerText = "업로드 성공!";
-      const imageUrl = `https://bloupla.net/img/?=${imageNames.join(',')}`;
-      document.getElementById('linkBox').value = imageUrl;
+      document.getElementById('status').innerText = "업로드 완료!";
+      const fileUrl = `https://bloupla.net/img/?=${fileUrls.join(',')}`;
+      document.getElementById('linkBox').value = fileUrl;
     });
+
+    async function convertVideoToGif(file) {
+      // ffmpeg.js 로딩
+      if (!ffmpeg.isLoaded()) {
+        await ffmpeg.load();
+      }
+
+      // 입력 파일을 ffmpeg 파일 시스템에 로드
+      ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+
+      // ffmpeg 명령어로 GIF 변환 실행
+      await ffmpeg.run('-i', file.name, '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-t', '10', 'output.gif');
+
+      // 변환된 GIF 파일 가져오기
+      const data = ffmpeg.FS('readFile', 'output.gif');
+
+      // Blob을 생성하고 URL을 반환
+      return new Blob([data.buffer], { type: 'image/gif' });
+    }
 
 
     // 링크 복사 기능
