@@ -287,8 +287,28 @@
             displayImage(downloadURL);
           });
         });
+
+        // 업로드 UI 숨김 처리
+        hideUploadUI();
       }
     }
+
+    // 업로드 UI 숨기는 함수
+    function hideUploadUI() {
+      uploadContainer.classList.add('hidden');
+      toggleButton.style.display = 'flex'; // 숨겨진 + 버튼 보이기
+    }
+
+    // UI 표시/숨김 토글 버튼 클릭 시 처리
+    toggleButton.addEventListener('click', () => {
+      if (uploadContainer.classList.contains('hidden')) {
+        uploadContainer.classList.remove('hidden');
+        toggleButton.innerText = '-';
+      } else {
+        uploadContainer.classList.add('hidden');
+        toggleButton.innerText = '+';
+      }
+    });
 
     // 이미지 표시 함수
     function displayImage(url) {
