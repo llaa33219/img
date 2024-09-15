@@ -85,10 +85,12 @@
     }
 
     #imageContainer img {
-      width: 100vw;  /* 가로 크기를 강제로 화면 전체로 조정 */
-      height: auto;
-      max-width: 50vw;
-      max-height: 50vh;
+      width: auto;          /* 기본적으로 auto로 설정 */
+      height: auto;         /* 세로는 자동으로 맞춤 */
+      max-width: 100vw;     /* 너무 클 경우 가로는 화면 크기 */
+      max-height: 100vh;    /* 세로는 화면 크기 초과하지 않도록 */
+      min-width: 50vw;      /* 최소 가로 크기 설정 */
+      min-height: 50vh;     /* 최소 세로 크기 설정 */
       display: block;
       margin: 20px auto;
       cursor: zoom-in;
@@ -97,13 +99,16 @@
     }
 
     #imageContainer img.expanded {
-      width: 100vw;  /* 확대 시에도 가로를 화면 전체로 조정 */
+      width: auto;          /* 확대 시에도 auto로 유지 */
       height: auto;
-      max-height: 100vh;
-      max-width: 80vw;
+      max-width: 80vw;      /* 확대 시 가로 최대 크기 */
+      max-height: 100vh;    /* 세로 최대 크기 */
+      min-width: 80vw;      /* 확대 시 최소 가로 크기 */
+      min-height: 80vh;     /* 확대 시 최소 세로 크기 */
       cursor: zoom-out;
-      object-fit: contain;  /* 확대 상태에서도 비율 유지 */
+      object-fit: contain;  /* 비율 유지 */
     }
+
 
     .container {
       text-align: center;
