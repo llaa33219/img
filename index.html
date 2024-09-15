@@ -86,23 +86,19 @@
 
     #imageContainer img {
       width: 100vw;  /* 가로 크기를 강제로 화면 전체로 조정 */
-      height: auto;
-      max-width: 50vw;
-      max-height: 50vh;
+      height: 100vh;  /* 세로 크기를 가로 크기에 맞춰서 조정 */
       display: block;
       margin: 20px auto;
       cursor: zoom-in;
       transition: all 0.3s ease;
-      object-fit: contain;  /* 비율 유지하며 화면에 맞춤 */
+      object-fit: cover;  /* 비율 유지하며 화면에 맞춤 */
     }
 
     #imageContainer img.expanded {
       width: 100vw;  /* 확대 시에도 가로를 화면 전체로 조정 */
-      height: auto;
-      max-height: 100vh;
-      max-width: 80vw;
+      height: 100vh;  /* 확대 시에도 세로를 가로 크기에 맞춰서 조정 */
       cursor: zoom-out;
-      object-fit: contain;  /* 확대 상태에서도 비율 유지 */
+      object-fit: cover;  /* 확대 상태에서도 비율 유지 */
     }
 
     .container {
