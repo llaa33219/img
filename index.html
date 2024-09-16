@@ -85,21 +85,20 @@
     }
 
     #imageContainer img {
-      width: min(100vw, 50vw); /* 가로 크기를 100vw와 50vw 중 작은 값으로 설정 */
-      height: auto;            /* 세로 크기는 자동 조정 */
+      width: min(100vw, 50vw);   /* 가로 크기를 100vw와 50vw 중 작은 값으로 설정 */
+      height: min(100vh, 50vh);  /* 세로 크기를 100vh와 50vh 중 작은 값으로 설정 */
       display: block;
       cursor: zoom-in;
       transition: all 0.3s ease;
-      object-fit: contain;     /* 비율 유지하며 화면에 맞춤 */
+      object-fit: contain;       /* 비율 유지하며 화면에 맞춤 */
     }
 
     #imageContainer img.expanded {
-      width: min(100vw, 80vw); /* 확대 시 가로 크기를 100vw와 80vw 중 작은 값으로 설정 */
-      height: auto;            /* 세로는 자동으로 조정 */
+      width: min(100vw, 80vw);   /* 확대 시 가로 크기를 100vw와 80vw 중 작은 값으로 설정 */
+      height: min(100vh, 100vh); /* 확대 시 세로 크기를 100vh로 제한 */
       cursor: zoom-out;
-      object-fit: contain;     /* 확대 상태에서도 비율 유지 */
+      object-fit: contain;       /* 확대 상태에서도 비율 유지 */
     }
-
 
 
     .container {
