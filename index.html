@@ -83,31 +83,35 @@
       justify-content: center;
       align-items: center;
     }
+
     #imageContainer {
-      display: inline-block; /* 컨테이너가 내부 이미지의 크기에 맞게 조정되도록 설정 */
-      overflow: hidden;      /* 필요시 이미지가 넘칠 경우 숨김 처리 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden; /* 필요에 따라 오버플로우 숨김 */
     }
 
     #imageContainer img {
-      width: 100vw;  /* 가로 크기를 강제로 화면 전체로 조정 */
-      height: auto;
-      max-width: 50vw;
-      max-height: 50vh;
-      display: block;
-      margin: 20px auto;
-      cursor: zoom-in;
-      transition: all 0.3s ease;
-      object-fit: contain;  /* 비율 유지하며 화면에 맞춤 */
+      width: 100vw;         /* 화면 전체 너비로 설정 */
+      height: auto;         /* 높이를 자동으로 조정하여 비율 유지 */
+      max-width: 50vw;      /* 최대 너비를 화면의 50%로 제한 */
+      max-height: 50vh;     /* 최대 높이를 화면의 50%로 제한 */
+      display: block;       /* 인라인 간격 제거 */
+      margin: 20px auto;    /* 이미지 중앙 정렬 및 위아래 마진 설정 */
+      cursor: zoom-in;      /* 확대 가능 커서 표시 */
+      transition: all 0.3s ease;  /* 부드러운 전환 효과 */
     }
 
     #imageContainer img.expanded {
-      width: 100vw;  /* 확대 시에도 가로를 화면 전체로 조정 */
-      height: auto;
-      max-height: 100vh;
-      max-width: 80vw;
-      cursor: zoom-out;
-      object-fit: contain;  /* 확대 상태에서도 비율 유지 */
+      width: 80vw;          /* 확대 시 너비를 화면의 80%로 설정 */
+      height: auto;         /* 높이를 자동으로 조정하여 비율 유지 */
+      max-width: 80vw;      /* 최대 너비를 화면의 80%로 제한 */
+      max-height: 100vh;    /* 최대 높이를 화면의 100%로 제한 */
+      cursor: zoom-out;     /* 축소 가능 커서 표시 */
     }
+
+    /* 추가적인 스타일링이 필요하다면 여기에 작성 */
+
 
     .container {
       text-align: center;
