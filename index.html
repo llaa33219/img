@@ -83,6 +83,11 @@
       justify-content: center;
       align-items: center;
     }
+    #imageContainer {
+      display: inline-block; /* 컨테이너가 내부 이미지의 크기에 맞게 조정되도록 설정 */
+      overflow: hidden;      /* 필요시 이미지가 넘칠 경우 숨김 처리 */
+    }
+
     #imageContainer img {
       width: 100vw;  /* 가로 크기를 강제로 화면 전체로 조정 */
       height: auto;
@@ -92,6 +97,7 @@
       margin: 20px auto;
       cursor: zoom-in;
       transition: all 0.3s ease;
+      object-fit: contain;  /* 비율 유지하며 화면에 맞춤 */
     }
 
     #imageContainer img.expanded {
@@ -100,8 +106,8 @@
       max-height: 100vh;
       max-width: 80vw;
       cursor: zoom-out;
+      object-fit: contain;  /* 확대 상태에서도 비율 유지 */
     }
-
 
     .container {
       text-align: center;
