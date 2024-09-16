@@ -84,19 +84,17 @@
       align-items: center;
     }
     #imageContainer img {
-      width: auto;         /* 가로 크기를 강제로 화면 전체로 조정 */
-      height: 40vw;         /* 세로 크기는 자동 조정 */
+      width: auto;
+      height: 40vw;
       display: block;
       cursor: zoom-in;
       transition: all 0.3s ease;
-      object-fit: contain;  /* 비율 유지하며 화면에 맞춤 */
     }
 
     #imageContainer img.expanded {
-      width: 80vw;         /* 확대 시에도 가로 크기를 화면 전체로 조정 */
-      height: auto;         /* 세로는 자동으로 조정 */
+      width: 80vw;
+      height: auto;
       cursor: zoom-out;
-      object-fit: contain;  /* 확대 상태에서도 비율 유지 */
     }
 
 
