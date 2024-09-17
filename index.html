@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>이미지 및 영상 공유</title>
-  <!-- FFmpeg 라이브러리 추가 -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+  <!-- gif.js 라이브러리 추가 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
   <style>
     /* 기존 스타일은 그대로 유지 */
     body {
@@ -165,6 +165,7 @@
       width: 100%;
       max-width: 500px;
       height: 20px;
+      margin-top: 10px;
     }
 
     #progressText {
@@ -223,7 +224,7 @@
     import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    
+
     const firebaseConfig = {
       apiKey: "AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE",
       authDomain: "imgshare-2.firebaseapp.com",
@@ -233,20 +234,19 @@
       appId: "1:669732206491:web:c57c3238a46b37c86c133e",
       measurementId: "G-C97WZLE7J0"
     };
-    
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
     const auth = getAuth();
-    
+
     signInAnonymously(auth).then(() => {
       console.log("[Auth] 익명 로그인 성공");
     }).catch((error) => {
       console.error("[Auth] 익명 인증 실패:", error);
       document.getElementById('status').innerText = "익명 인증 실패: " + error.message;
-      document.getElementById('status').style.color = "red";
     });
-    
+
     const fileInput = document.getElementById('fileInput');
     const fileSelectButton = document.getElementById('fileSelectButton');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
@@ -257,13 +257,13 @@
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
-    
+
     // 파일 선택 버튼 클릭 시 파일 입력 열기
     fileSelectButton.addEventListener('click', () => {
       console.log("[UI] 파일 선택 버튼 클릭됨");
       fileInput.click();
     });
-    
+
     // 파일 선택 시 파일명 표시
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
@@ -275,13 +275,13 @@
         console.log("[UI] 파일 선택 취소됨");
       }
     });
-    
+
     // 클립보드에서 이미지/비디오 붙여넣기 처리
     document.addEventListener('paste', (event) => {
       console.log("[Clipboard] 붙여넣기 이벤트 발생");
       const clipboardItems = event.clipboardData.items;
       let mediaFile = null;
-    
+
       for (const item of clipboardItems) {
         if (item.type.indexOf('image') !== -1 || item.type.indexOf('video') !== -1) {
           mediaFile = item.getAsFile();
@@ -289,19 +289,19 @@
           break;
         }
       }
-    
+
       if (mediaFile) {
         const fileExtension = mediaFile.name.split('.').pop().toLowerCase();
         const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
         const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
-    
+
         if (!allowedImageExtensions.includes(fileExtension) && !allowedVideoExtensions.includes(fileExtension)) {
           statusElement.innerText = "허용되지 않은 파일 형식입니다.";
           statusElement.style.color = "red";
           console.warn(`[Clipboard] 허용되지 않은 파일 형식: ${fileExtension}`);
           return;
         }
-    
+
         // 파일 선택된 것처럼 표시
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(mediaFile);
@@ -316,7 +316,7 @@
         console.warn("[Clipboard] 클립보드에 이미지나 비디오가 없음");
       }
     });
-    
+
     // 파일 업로드 버튼 클릭 시 업로드 프로세스 시작
     uploadButton.addEventListener('click', async () => {
       console.log("[Upload] 업로드 버튼 클릭됨");
@@ -327,11 +327,11 @@
         console.warn("[Upload] 파일 선택되지 않음");
         return;
       }
-    
+
       const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
       const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
       let uploadedNames = [];
-    
+
       for (const mediaFile of mediaFiles) {
         const fileNameParts = mediaFile.name.split('.');
         if (fileNameParts.length < 2) {
@@ -343,22 +343,22 @@
         const fileExtension = fileNameParts.pop().toLowerCase();
         const isImage = allowedImageExtensions.includes(fileExtension);
         const isVideo = allowedVideoExtensions.includes(fileExtension);
-    
+
         console.log(`[Upload] 처리 중인 파일: ${mediaFile.name}, 확장자: ${fileExtension}, isImage: ${isImage}, isVideo: ${isVideo}`);
-    
+
         if (!isImage && !isVideo) {
           statusElement.innerText = "허용되지 않은 파일 형식입니다.";
           statusElement.style.color = "red";
           console.warn(`[Upload] 허용되지 않은 파일 형식: ${fileExtension}`);
           return;
         }
-    
+
         try {
           statusElement.innerText = "업로드 중...";
           statusElement.style.color = "black";
           console.log(`[Upload] 업로드 시작: ${mediaFile.name}`);
           let uploadFile = mediaFile;
-    
+
           if (isVideo) {
             // 비디오를 GIF로 변환
             statusElement.innerText = `비디오를 GIF로 변환 중: ${mediaFile.name}`;
@@ -373,7 +373,7 @@
             }
             console.log(`[Convert] GIF 변환 완료: ${mediaFile.name}`);
           }
-    
+
           const uniqueName = Math.random().toString(36).substring(2, 8) + (isVideo ? '.gif' : '.' + fileExtension);
           console.log(`[Upload] Firebase Storage에 업로드할 고유 이름: ${uniqueName}`);
           const storageRef = ref(storage, uniqueName);
@@ -383,7 +383,7 @@
           console.log(`[Upload] 다운로드 URL 획득: ${downloadURL}`);
           await setDoc(doc(db, 'images', uniqueName), { url: downloadURL });
           console.log(`[Firestore] Firestore에 문서 추가: ${uniqueName}`);
-    
+
           uploadedNames.push(uniqueName);
         } catch (error) {
           console.error(`[Upload] 업로드 실패: ${mediaFile.name}`, error);
@@ -392,7 +392,7 @@
           return;
         }
       }
-    
+
       statusElement.innerText = "업로드 성공!";
       statusElement.style.color = "green";
       console.log("[Upload] 모든 파일 업로드 성공");
@@ -400,42 +400,103 @@
       document.getElementById('linkBox').value = imageUrl;
       console.log(`[Upload] 공유 링크 생성: ${imageUrl}`);
     });
-    
-    // GIF 변환 함수 using FFmpeg
+
+    // GIF 변환 함수
     async function convertVideoToGif(videoFile) {
       console.log(`[Convert] GIF 변환 함수 호출: ${videoFile.name}`);
-      const { createFFmpeg, fetchFile } = FFmpeg;
-      const ffmpeg = createFFmpeg({ log: true });
-    
-      try {
-        console.log(`[Convert] FFmpeg 로드 중...`);
-        await ffmpeg.load();
-        console.log(`[Convert] FFmpeg 로드 완료`);
-    
-        // 읽은 비디오 파일을 FFmpeg에 입력
-        ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(videoFile));
-        console.log(`[Convert] 비디오 파일 FFmpeg에 로드 완료`);
-    
-        // 변환 명령어 실행: 비디오의 처음 2초를 GIF로 변환
-        console.log(`[Convert] FFmpeg 변환 명령어 실행 중...`);
-        await ffmpeg.run('-t', '2', '-i', 'input.mp4', '-vf', 'fps=24,scale=320:-1:flags=lanczos', '-f', 'gif', 'output.gif');
-        console.log(`[Convert] FFmpeg 변환 명령어 완료`);
-    
-        // 변환된 GIF 파일을 읽기
-        const data = ffmpeg.FS('readFile', 'output.gif');
-        console.log(`[Convert] 변환된 GIF 파일 읽기 완료`);
-    
-        // Blob으로 변환
-        const gifBlob = new Blob([data.buffer], { type: 'image/gif' });
-        console.log(`[Convert] GIF Blob 생성 완료`);
-    
-        return gifBlob;
-      } catch (error) {
-        console.error(`[Convert] GIF 변환 중 오류 발생:`, error);
-        return null;
-      }
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(videoFile);
+        console.log(`[Convert] Object URL 생성: ${url}`);
+        const video = document.createElement('video');
+        video.src = url;
+        video.crossOrigin = 'anonymous';
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = 'auto';
+
+        video.addEventListener('loadeddata', () => {
+          console.log(`[Convert] 비디오 로드 완료: ${videoFile.name}`);
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          // 캔버스 크기를 추가로 축소하여 용량을 줄입니다 (예: 원래 크기의 40%)
+          const scaleFactor = 0.4;
+          canvas.width = Math.floor(video.videoWidth * scaleFactor);
+          canvas.height = Math.floor(video.videoHeight * scaleFactor);
+          console.log(`[Convert] 캔버스 크기 설정: ${canvas.width}x${canvas.height}`);
+
+          const gif = new GIF({
+            workers: 2,
+            quality: 20, // 화질을 더욱 낮춰 용량을 줄임 (높은 값일수록 낮은 화질)
+            workerScript: 'https://bloupla.net/gif.worker.js', // 자신의 도메인에 호스팅한 gif.worker.js 경로로 수정
+            width: canvas.width,
+            height: canvas.height
+          });
+
+          console.log(`[Convert] GIF 객체 생성: workers=2, quality=20`);
+
+          // 'progress' 이벤트 리스너 추가
+          gif.on('progress', function(p) {
+            const percent = Math.round(p * 100);
+            statusElement.innerText = `GIF 변환 중: ${percent}%`;
+            progressBar.value = percent;
+            progressText.innerText = `${percent}%`;
+            console.log(`[Convert] GIF 변환 진행 상황: ${percent}%`);
+          });
+
+          // 'finished' 이벤트 리스너
+          gif.on('finished', (blob) => {
+            URL.revokeObjectURL(url);
+            console.log(`[Convert] GIF 변환 완료: ${videoFile.name}, Blob URL: ${URL.createObjectURL(blob)}`);
+            progressContainer.style.display = "none"; // 프로그레스 바 숨김
+            resolve(blob);
+          });
+
+          // 'abort' 이벤트 리스너
+          gif.on('abort', () => {
+            URL.revokeObjectURL(url);
+            console.error(`[Convert] GIF 변환이 중단되었습니다: ${videoFile.name}`);
+            progressContainer.style.display = "none"; // 프로그레스 바 숨김
+            reject(new Error('GIF 변환이 중단되었습니다.'));
+          });
+
+          const captureInterval = 1000 / 24; // 24fps => 약 41.67ms 간격
+          let lastCaptureTime = 0;
+
+          const captureFrame = () => {
+            const currentTime = video.currentTime * 1000; // 초를 밀리초로 변환
+            if (currentTime - lastCaptureTime >= captureInterval) {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              gif.addFrame(canvas, { copy: true, delay: 42 }); // 약 24fps에 맞춘 delay
+              console.log(`[Convert] 프레임 캡처: ${video.currentTime.toFixed(2)}초`);
+              lastCaptureTime = currentTime;
+            }
+          };
+
+          // 프로그레스 바 보이기 및 초기화
+          progressBar.value = 0;
+          progressText.innerText = "0%";
+          progressContainer.style.display = "flex";
+          console.log(`[Convert] 프레임 캡처 시작: 24fps, 첫 2초`);
+
+          const intervalId = setInterval(() => {
+            captureFrame();
+            if (video.currentTime > 2 || video.ended) { // 처음 2초까지만 캡처
+              clearInterval(intervalId);
+              gif.render();
+              console.log(`[Convert] GIF 렌더링 시작: ${videoFile.name}`);
+            }
+          }, 20); // 더 자주 체크하여 정확한 타이밍 캡처
+        });
+
+        video.addEventListener('error', (e) => {
+          URL.revokeObjectURL(url);
+          console.error(`[Convert] 비디오 로드 오류: ${videoFile.name}`, e);
+          progressContainer.style.display = "none"; // 프로그레스 바 숨김
+          reject(new Error('비디오 로드 오류'));
+        });
+      });
     }
-    
+
     // 링크 복사 기능
     document.getElementById('copyButton').addEventListener('click', () => {
       const linkBox = document.getElementById('linkBox');
@@ -444,7 +505,7 @@
       alert('링크가 복사되었습니다!');
       console.log("[UI] 링크 복사 버튼 클릭됨");
     });
-    
+
     // URL에서 이미지 로드
     function loadImageFromUrl() {
       console.log("[Load] URL에서 이미지 로드 시작");
@@ -454,14 +515,14 @@
         console.log("[Load] URL에 이미지 이름 파라미터 없음");
         return;
       }
-    
+
       const imageNames = imageNamesParam.split(',');
       console.log(`[Load] 로드할 이미지 이름들: ${imageNames.join(', ')}`);
-    
+
       if (imageNames.length > 0) {
         const imageContainer = document.getElementById('imageContainer');
         imageContainer.innerHTML = '';
-    
+
         imageNames.forEach(imageName => {
           const trimmedName = imageName.trim();
           console.log(`[Load] 이미지 로드 시도: ${trimmedName}`);
@@ -473,20 +534,20 @@
             console.error(`[Load] 이미지 로드 실패: ${trimmedName}`, error);
           });
         });
-    
+
         // 업로드 UI 숨김 처리
         hideUploadUI();
         console.log("[Load] 업로드 UI 숨김 처리");
       }
     }
-    
+
     // 업로드 UI 숨기는 함수
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
       toggleButton.style.display = 'flex'; // 숨겨진 + 버튼 보이기
       console.log("[UI] 업로드 컨테이너 숨김");
     }
-    
+
     // UI 표시/숨김 토글 버튼 클릭 시 처리
     toggleButton.addEventListener('click', () => {
       if (uploadContainer.classList.contains('hidden')) {
@@ -499,7 +560,7 @@
         console.log("[UI] 업로드 컨테이너 숨김");
       }
     });
-    
+
     // 미디어 표시 함수 (이미지 또는 GIF)
     function displayMedia(name, url) {
       console.log(`[Display] 미디어 표시: ${name}, URL: ${url}`);
@@ -507,13 +568,13 @@
       const fileExtension = name.split('.').pop().toLowerCase();
       const imageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
       const isImage = imageExtensions.includes(fileExtension);
-    
+
       if (isImage) {
         const imgElement = document.createElement('img');
         imgElement.src = url;
         imageContainer.appendChild(imgElement);
         console.log(`[Display] 이미지 요소 추가됨: ${url}`);
-    
+
         // 확대 기능
         imgElement.addEventListener('click', function () {
           imgElement.classList.toggle('expanded');
@@ -525,7 +586,7 @@
         imgElement.src = url;
         imageContainer.appendChild(imgElement);
         console.log(`[Display] GIF 이미지 요소 추가됨: ${url}`);
-    
+
         // 확대 기능
         imgElement.addEventListener('click', function () {
           imgElement.classList.toggle('expanded');
@@ -533,7 +594,7 @@
         });
       }
     }
-    
+
     window.onload = loadImageFromUrl;
   </script>
 </body>
