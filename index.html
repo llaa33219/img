@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
-  <title>이미지 공유</title>
+  <title>이미지 및 영상 공유</title>
+  <!-- gif.js 라이브러리 추가 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
   <style>
     /* 기존 스타일은 그대로 유지 */
     body {
@@ -84,7 +87,7 @@
       align-items: center;
     }
 
-    #imageContainer img {
+    #imageContainer img, #imageContainer video {
       width: 100vw;  /* 가로 크기를 강제로 화면 전체로 조정 */
       height: auto;
       max-width: 50vw;
@@ -96,7 +99,7 @@
       object-fit: contain;  /* 비율 유지하며 화면에 맞춤 */
     }
 
-    #imageContainer img.expanded {
+    #imageContainer img.expanded, #imageContainer video.expanded {
       width: 100vw;  /* 확대 시에도 가로를 화면 전체로 조정 */
       height: auto;
       max-height: 100vh;
@@ -104,7 +107,6 @@
       cursor: zoom-out;
       object-fit: contain;  /* 확대 상태에서도 비율 유지 */
     }
-
 
     .container {
       text-align: center;
@@ -155,16 +157,17 @@
     }
   </style>
 </head>
-<div class="header-content">
-  <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
-  <h1>이미지 공유</h1>
-  <button class="toggle-button" id="toggleButton">+</button>
-</div>
 <body>
-  
+  <div class="header-content">
+    <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
+    <h1>이미지 및 영상 공유</h1>
+    <button class="toggle-button" id="toggleButton">+</button>
+  </div>
+
   <div class="upload-container" id="uploadContainer">
     <button id="fileSelectButton">파일 선택</button>
-    <input type="file" id="fileInput" accept="image/*" style="display: none;" multiple> <!-- multiple 속성 추가 -->
+    <!-- 이미지와 비디오를 모두 허용하도록 accept 속성 수정 -->
+    <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" multiple>
     <div id="fileNameDisplay">파일 선택 안됨</div>
     <button id="uploadButton">업로드</button>
     <p id="status"></p>
@@ -222,68 +225,85 @@
         const fileNames = Array.from(fileInput.files).map(file => file.name).join(', ');
         fileNameDisplay.innerText = fileNames;
       } else {
-        fileNameDisplay.innerText = "No file selected";
+        fileNameDisplay.innerText = "파일 선택 안됨";
       }
     });
 
-    // 클립보드에서 이미지 붙여넣기 처리
+    // 클립보드에서 이미지/비디오 붙여넣기 처리
     document.addEventListener('paste', (event) => {
       const clipboardItems = event.clipboardData.items;
-      let imageFile = null;
+      let mediaFile = null;
 
       for (const item of clipboardItems) {
-        if (item.type.indexOf('image') !== -1) {
-          imageFile = item.getAsFile();
+        if (item.type.indexOf('image') !== -1 || item.type.indexOf('video') !== -1) {
+          mediaFile = item.getAsFile();
           break;
         }
       }
 
-      if (imageFile) {
-        const fileExtension = imageFile.name.split('.').pop().toLowerCase();
-        const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+      if (mediaFile) {
+        const fileExtension = mediaFile.name.split('.').pop().toLowerCase();
+        const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+        const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
 
-        if (!allowedExtensions.includes(fileExtension)) {
+        if (!allowedImageExtensions.includes(fileExtension) && !allowedVideoExtensions.includes(fileExtension)) {
           document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
           return;
         }
 
         // 파일 선택된 것처럼 표시
         const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(imageFile);
+        dataTransfer.items.add(mediaFile);
         fileInput.files = dataTransfer.files;
-        fileNameDisplay.innerText = imageFile.name;
-        document.getElementById('status').innerText = "클립보드에서 이미지가 선택되었습니다.";
+        fileNameDisplay.innerText = mediaFile.name;
+        document.getElementById('status').innerText = "클립보드에서 미디어가 선택되었습니다.";
       } else {
-        document.getElementById('status').innerText = "클립보드에 이미지가 없습니다.";
+        document.getElementById('status').innerText = "클립보드에 이미지나 비디오가 없습니다.";
       }
     });
 
     // 파일 업로드
     uploadButton.addEventListener('click', async () => {
-      const imageFiles = fileInput.files;
-      if (imageFiles.length === 0) {
-        document.getElementById('status').innerText = "이미지를 선택하세요.";
+      const mediaFiles = fileInput.files;
+      if (mediaFiles.length === 0) {
+        document.getElementById('status').innerText = "파일을 선택하세요.";
         return;
       }
 
-      const allowedExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
-      let imageNames = [];
+      const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+      const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
+      let uploadedNames = [];
 
-      for (const imageFile of imageFiles) {
-        const fileExtension = imageFile.name.split('.').pop().toLowerCase();
-        if (!allowedExtensions.includes(fileExtension)) {
+      for (const mediaFile of mediaFiles) {
+        const fileExtension = mediaFile.name.split('.').pop().toLowerCase();
+        const isImage = allowedImageExtensions.includes(fileExtension);
+        const isVideo = allowedVideoExtensions.includes(fileExtension);
+
+        if (!isImage && !isVideo) {
           document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
           return;
         }
 
         try {
           document.getElementById('status').innerText = "업로드 중...";
-          const uniqueImageName = Math.random().toString(36).substring(2, 8);
-          const storageRef = ref(storage, uniqueImageName);
-          await uploadBytes(storageRef, imageFile);
+          let uploadFile = mediaFile;
+
+          if (isVideo) {
+            // 비디오를 GIF로 변환
+            document.getElementById('status').innerText = `비디오를 GIF로 변환 중: ${mediaFile.name}`;
+            uploadFile = await convertVideoToGif(mediaFile);
+            if (!uploadFile) {
+              document.getElementById('status').innerText = "GIF 변환 실패";
+              return;
+            }
+          }
+
+          const uniqueName = Math.random().toString(36).substring(2, 8) + (isVideo ? '.gif' : '.' + fileExtension);
+          const storageRef = ref(storage, uniqueName);
+          await uploadBytes(storageRef, uploadFile);
           const downloadURL = await getDownloadURL(storageRef);
-          await setDoc(doc(db, 'images', uniqueImageName), { url: downloadURL });
-          imageNames.push(uniqueImageName);
+          await setDoc(doc(db, 'images', uniqueName), { url: downloadURL });
+          uploadedNames.push(uniqueName);
         } catch (error) {
           console.error("업로드 실패:", error);
           document.getElementById('status').innerText = "업로드 실패: " + error.message;
@@ -292,10 +312,70 @@
       }
 
       document.getElementById('status').innerText = "업로드 성공!";
-      const imageUrl = `https://bloupla.net/img/?=${imageNames.join(',')}`;
+      const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
       document.getElementById('linkBox').value = imageUrl;
     });
 
+    // GIF 변환 함수
+    async function convertVideoToGif(videoFile) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(videoFile);
+        const video = document.createElement('video');
+        video.src = url;
+        video.crossOrigin = 'anonymous';
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = 'auto';
+
+        video.addEventListener('loadeddata', () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const gif = new GIF({
+            workers: 2,
+            quality: 10,
+            workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+          });
+
+          // 비디오의 해상도 설정
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+
+          const captureFrame = () => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            gif.addFrame(ctx, { copy: true, delay: 200 });
+          };
+
+          // 비디오의 일부 프레임만 캡처 (예: 처음 2초)
+          video.currentTime = 0;
+          video.play();
+
+          video.addEventListener('timeupdate', function onTimeUpdate() {
+            if (video.currentTime > 2 || video.ended) {
+              video.pause();
+              video.removeEventListener('timeupdate', onTimeUpdate);
+              gif.render();
+            } else {
+              captureFrame();
+            }
+          });
+
+          gif.on('finished', (blob) => {
+            URL.revokeObjectURL(url);
+            resolve(blob);
+          });
+
+          gif.on('abort', () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('GIF 변환이 중단되었습니다.'));
+          });
+        });
+
+        video.addEventListener('error', (e) => {
+          URL.revokeObjectURL(url);
+          reject(new Error('비디오 로드 오류'));
+        });
+      });
+    }
 
     // 링크 복사 기능
     document.getElementById('copyButton').addEventListener('click', () => {
@@ -308,16 +388,22 @@
     // URL에서 이미지 로드
     function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
-      const imageNames = urlParams.get('').split(',');
+      const imageNamesParam = urlParams.get('');
+      if (!imageNamesParam) return;
+
+      const imageNames = imageNamesParam.split(',');
 
       if (imageNames.length > 0) {
         const imageContainer = document.getElementById('imageContainer');
         imageContainer.innerHTML = '';
 
         imageNames.forEach(imageName => {
-          const storageRef = ref(storage, imageName.trim());
+          const trimmedName = imageName.trim();
+          const storageRef = ref(storage, trimmedName);
           getDownloadURL(storageRef).then((downloadURL) => {
-            displayImage(downloadURL);
+            displayMedia(trimmedName, downloadURL);
+          }).catch(error => {
+            console.error("이미지 로드 실패:", error);
           });
         });
 
@@ -343,35 +429,41 @@
       }
     });
 
-    // 이미지 표시 함수
-    function displayImage(url) {
-      const imgElement = document.createElement('img');
-      imgElement.src = url;
+    // 미디어 표시 함수 (이미지 또는 비디오)
+    function displayMedia(name, url) {
       const imageContainer = document.getElementById('imageContainer');
-      imageContainer.appendChild(imgElement);
+      const fileExtension = name.split('.').pop().toLowerCase();
+      const imageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+      const isImage = imageExtensions.includes(fileExtension);
 
-      // 확대 기능
-      imgElement.addEventListener('click', function () {
-        if (imgElement.classList.contains('expanded')) {
-          imgElement.classList.remove('expanded');
-        } else {
-          imgElement.classList.add('expanded');
-        }
-        updateCursor();
-      });
+      if (isImage) {
+        const imgElement = document.createElement('img');
+        imgElement.src = url;
+        imageContainer.appendChild(imgElement);
 
-      // 이미지에 마우스 커서 업데이트 (줌 인/줌 아웃)
-      function updateCursor() {
-        if (imgElement.classList.contains('expanded')) {
-          imgElement.style.cursor = 'zoom-out';
-        } else {
-          imgElement.style.cursor = 'zoom-in';
-        }
+        // 확대 기능
+        imgElement.addEventListener('click', function () {
+          imgElement.classList.toggle('expanded');
+        });
+      } else if (fileExtension === 'gif') {
+        const imgElement = document.createElement('img');
+        imgElement.src = url;
+        imageContainer.appendChild(imgElement);
+
+        // 확대 기능
+        imgElement.addEventListener('click', function () {
+          imgElement.classList.toggle('expanded');
+        });
       }
-
-      imgElement.addEventListener('mouseenter', updateCursor);
-      imgElement.addEventListener('mouseleave', updateCursor);
-      imgElement.addEventListener('mousemove', updateCursor);
+      // 추가적으로 비디오 파일을 표시하려면 아래에 추가
+      /*
+      else {
+        const videoElement = document.createElement('video');
+        videoElement.src = url;
+        videoElement.controls = true;
+        imageContainer.appendChild(videoElement);
+      }
+      */
     }
 
     window.onload = loadImageFromUrl;
