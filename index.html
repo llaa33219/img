@@ -266,7 +266,7 @@
     const { createFFmpeg, fetchFile } = FFmpeg;
     const ffmpeg = createFFmpeg({ 
       log: true,
-      corePath: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js",  // CDN 경로를 정확하게 지정
+      corePath: "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.6/esm/ffmpeg-core.js",  // CDN 경로를 정확하게 지정
       disableWasmThreads: true,
       progress: ({ ratio }) => {
         const percent = Math.round(ratio * 100);
