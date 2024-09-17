@@ -212,6 +212,7 @@
     const uploadButton = document.getElementById('uploadButton');
     const uploadContainer = document.getElementById('uploadContainer');
     const toggleButton = document.getElementById('toggleButton');
+    const statusElement = document.getElementById('status');
 
     // 파일 선택 버튼 클릭 시 파일 입력 열기
     fileSelectButton.addEventListener('click', () => {
@@ -246,7 +247,7 @@
         const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
 
         if (!allowedImageExtensions.includes(fileExtension) && !allowedVideoExtensions.includes(fileExtension)) {
-          document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
+          statusElement.innerText = "허용되지 않은 파일 형식입니다.";
           return;
         }
 
@@ -255,9 +256,9 @@
         dataTransfer.items.add(mediaFile);
         fileInput.files = dataTransfer.files;
         fileNameDisplay.innerText = mediaFile.name;
-        document.getElementById('status').innerText = "클립보드에서 미디어가 선택되었습니다.";
+        statusElement.innerText = "클립보드에서 미디어가 선택되었습니다.";
       } else {
-        document.getElementById('status').innerText = "클립보드에 이미지나 비디오가 없습니다.";
+        statusElement.innerText = "클립보드에 이미지나 비디오가 없습니다.";
       }
     });
 
@@ -265,7 +266,7 @@
     uploadButton.addEventListener('click', async () => {
       const mediaFiles = fileInput.files;
       if (mediaFiles.length === 0) {
-        document.getElementById('status').innerText = "파일을 선택하세요.";
+        statusElement.innerText = "파일을 선택하세요.";
         return;
       }
 
@@ -276,7 +277,7 @@
       for (const mediaFile of mediaFiles) {
         const fileNameParts = mediaFile.name.split('.');
         if (fileNameParts.length < 2) {
-          document.getElementById('status').innerText = "파일에 확장자가 없습니다.";
+          statusElement.innerText = "파일에 확장자가 없습니다.";
           return;
         }
         const fileExtension = fileNameParts.pop().toLowerCase();
@@ -286,20 +287,20 @@
         console.log(`Processing file: ${mediaFile.name}, Extension: ${fileExtension}, isImage: ${isImage}, isVideo: ${isVideo}`);
 
         if (!isImage && !isVideo) {
-          document.getElementById('status').innerText = "허용되지 않은 파일 형식입니다.";
+          statusElement.innerText = "허용되지 않은 파일 형식입니다.";
           return;
         }
 
         try {
-          document.getElementById('status').innerText = "업로드 중...";
+          statusElement.innerText = "업로드 중...";
           let uploadFile = mediaFile;
 
           if (isVideo) {
             // 비디오를 GIF로 변환
-            document.getElementById('status').innerText = `비디오를 GIF로 변환 중: ${mediaFile.name}`;
+            statusElement.innerText = `비디오를 GIF로 변환 중: ${mediaFile.name}`;
             uploadFile = await convertVideoToGif(mediaFile);
             if (!uploadFile) {
-              document.getElementById('status').innerText = "GIF 변환 실패";
+              statusElement.innerText = "GIF 변환 실패";
               return;
             }
           }
@@ -314,12 +315,12 @@
           console.log(`Uploaded: ${uniqueName}, URL: ${downloadURL}`);
         } catch (error) {
           console.error("업로드 실패:", error);
-          document.getElementById('status').innerText = "업로드 실패: " + error.message;
+          statusElement.innerText = "업로드 실패: " + error.message;
           return;
         }
       }
 
-      document.getElementById('status').innerText = "업로드 성공!";
+      statusElement.innerText = "업로드 성공!";
       const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
       document.getElementById('linkBox').value = imageUrl;
     });
@@ -349,6 +350,15 @@
             width: canvas.width,
             height: canvas.height
           });
+
+          // 'progress' 이벤트 리스너 추가
+          gif.on('progress', function(p) {
+            const percent = Math.round(p * 100);
+            statusElement.innerText = `GIF 변환 중: ${percent}%`;
+          });
+
+          // 'finished' 이벤트 리스너는 이미 존재
+          // gif.on('finished', ...) 여기에 추가된 'progress' 리스너로 대체됩니다.
 
           const captureFrame = () => {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
