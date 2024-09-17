@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>이미지 및 영상 공유</title>
-  <!-- gif.js 라이브러리 추가 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <!-- ffmpeg.wasm 라이브러리 추가 -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
   <style>
     /* 기존 스타일은 그대로 유지 */
     body {
@@ -262,6 +262,50 @@
       }
     });
 
+    // FFmpeg 초기화
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ 
+      log: true,
+      progress: ({ ratio }) => {
+        const percent = Math.round(ratio * 100);
+        statusElement.innerText = `GIF 변환 중: ${percent}%`;
+      }
+    });
+
+    // 변환 함수 업데이트
+    async function convertVideoToGif(videoFile) {
+      try {
+        if (!ffmpeg.isLoaded()) {
+          statusElement.innerText = "FFmpeg 로드 중...";
+          await ffmpeg.load();
+        }
+
+        statusElement.innerText = "비디오를 GIF로 변환 중...";
+        
+        // 비디오 파일을 FFmpeg에 가상 파일 시스템으로 불러오기
+        ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(videoFile));
+
+        // FFmpeg 명령어 실행: 비디오의 처음 2초를 GIF로 변환
+        await ffmpeg.run('-i', 'input.mp4', '-t', '2', '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-gifflags', '+transdiff', 'output.gif');
+
+        // 변환된 GIF 파일을 가져오기
+        const data = ffmpeg.FS('readFile', 'output.gif');
+
+        // Blob으로 변환
+        const gifBlob = new Blob([data.buffer], { type: 'image/gif' });
+
+        // 메모리 정리
+        ffmpeg.FS('unlink', 'input.mp4');
+        ffmpeg.FS('unlink', 'output.gif');
+
+        return gifBlob;
+      } catch (error) {
+        console.error("GIF 변환 실패:", error);
+        statusElement.innerText = "GIF 변환 실패: " + error.message;
+        return null;
+      }
+    }
+
     // 파일 업로드
     uploadButton.addEventListener('click', async () => {
       const mediaFiles = fileInput.files;
@@ -297,7 +341,6 @@
 
           if (isVideo) {
             // 비디오를 GIF로 변환
-            statusElement.innerText = `비디오를 GIF로 변환 중: ${mediaFile.name}`;
             uploadFile = await convertVideoToGif(mediaFile);
             if (!uploadFile) {
               statusElement.innerText = "GIF 변환 실패";
@@ -324,83 +367,6 @@
       const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
       document.getElementById('linkBox').value = imageUrl;
     });
-
-    // GIF 변환 함수
-    async function convertVideoToGif(videoFile) {
-      return new Promise((resolve, reject) => {
-        const url = URL.createObjectURL(videoFile);
-        const video = document.createElement('video');
-        video.src = url;
-        video.crossOrigin = 'anonymous';
-        video.muted = true;
-        video.playsInline = true;
-        video.preload = 'auto';
-
-        video.addEventListener('loadeddata', () => {
-          console.log("비디오 로드 완료, 변환 시작");
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          // 캔버스 크기를 추가로 축소하여 용량을 줄입니다 (예: 원래 크기의 40%)
-          const scaleFactor = 0.4;
-          canvas.width = Math.floor(video.videoWidth * scaleFactor);
-          canvas.height = Math.floor(video.videoHeight * scaleFactor);
-
-          const gif = new GIF({
-            workers: 2,
-            quality: 20, // 화질을 더욱 낮춰 용량을 줄입니다. (높은 값일수록 낮은 화질)
-            workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js', // 자신의 도메인에 호스팅한 gif.worker.js 경로로 수정
-            width: canvas.width,
-            height: canvas.height
-          });
-
-          // 'progress' 이벤트 리스너 추가
-          gif.on('progress', function(p) {
-            const percent = Math.round(p * 100);
-            statusElement.innerText = `GIF 변환 중: ${percent}%`;
-          });
-
-          const captureInterval = 1000 / 24; // 24fps => 약 41.67ms 간격
-          let lastCaptureTime = 0;
-
-          const captureFrame = () => {
-            const currentTime = video.currentTime * 1000; // 초를 밀리초로 변환
-            if (currentTime - lastCaptureTime >= captureInterval) {
-              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-              gif.addFrame(canvas, { copy: true, delay: 42 }); // 약 24fps에 맞춘 delay
-              console.log(`프레임 캡처: ${video.currentTime.toFixed(2)}초`);
-              lastCaptureTime = currentTime;
-            }
-          };
-
-          const intervalId = setInterval(() => {
-            captureFrame();
-            if (video.currentTime > 2 || video.ended) { // 처음 2초까지만 캡처
-              clearInterval(intervalId);
-              gif.render();
-              console.log("GIF 렌더링 시작");
-            }
-          }, 20); // 더 자주 체크하여 정확한 타이밍 캡처
-
-          gif.on('finished', (blob) => {
-            URL.revokeObjectURL(url);
-            console.log("GIF 변환 완료");
-            resolve(blob);
-          });
-
-          gif.on('abort', () => {
-            URL.revokeObjectURL(url);
-            console.error("GIF 변환이 중단되었습니다.");
-            reject(new Error('GIF 변환이 중단되었습니다.'));
-          });
-        });
-
-        video.addEventListener('error', (e) => {
-          URL.revokeObjectURL(url);
-          console.error("비디오 로드 오류", e);
-          reject(new Error('비디오 로드 오류'));
-        });
-      });
-    }
 
     // 링크 복사 기능
     document.getElementById('copyButton').addEventListener('click', () => {
