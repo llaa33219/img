@@ -262,10 +262,11 @@
       }
     });
 
-    // FFmpeg 초기화
+    // FFmpeg 초기화 (단일 스레드 모드)
     const { createFFmpeg, fetchFile } = FFmpeg;
     const ffmpeg = createFFmpeg({ 
       log: true,
+      threads: 1, // 단일 스레드로 설정하여 SharedArrayBuffer 사용 안 함
       progress: ({ ratio }) => {
         const percent = Math.round(ratio * 100);
         statusElement.innerText = `GIF 변환 중: ${percent}%`;
