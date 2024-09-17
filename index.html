@@ -86,8 +86,8 @@
       align-items: center;
     }
 
-    #imageContainer img, #imageContainer video {
-      width: 100vw;  /* 가로 크기를 강제로 화면 전체로 조정 */
+    #imageContainer img {
+      width: 50vw;  /* 가로 크기를 50vw로 조정 */
       height: auto;
       max-width: 50vw;
       max-height: 50vh;
@@ -98,8 +98,8 @@
       object-fit: contain;  /* 비율 유지하며 화면에 맞춤 */
     }
 
-    #imageContainer img.expanded, #imageContainer video.expanded {
-      width: 100vw;  /* 확대 시에도 가로를 화면 전체로 조정 */
+    #imageContainer img.expanded {
+      width: 80vw;  /* 확대 시 가로를 80vw로 조정 */
       height: auto;
       max-height: 100vh;
       max-width: 80vw;
@@ -340,12 +340,14 @@
           console.log("비디오 로드 완료, 변환 시작");
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+          // 캔버스 크기를 축소하여 용량을 줄입니다 (예: 원래 크기의 50%)
+          const scaleFactor = 0.5;
+          canvas.width = Math.floor(video.videoWidth * scaleFactor);
+          canvas.height = Math.floor(video.videoHeight * scaleFactor);
 
           const gif = new GIF({
             workers: 2,
-            quality: 10,
+            quality: 10, // 화질을 낮춰 용량을 줄입니다.
             workerScript: 'https://bloupla.net/gif.worker.js', // 자신의 도메인에 호스팅한 gif.worker.js 경로로 수정
             width: canvas.width,
             height: canvas.height
@@ -357,29 +359,27 @@
             statusElement.innerText = `GIF 변환 중: ${percent}%`;
           });
 
-          // 'finished' 이벤트 리스너는 이미 존재
-          // gif.on('finished', ...) 여기에 추가된 'progress' 리스너로 대체됩니다.
+          const captureInterval = 1000 / 24; // 24fps => 약 41.67ms 간격
+          let lastCaptureTime = 0;
 
           const captureFrame = () => {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            gif.addFrame(canvas, { copy: true, delay: 200 });
-            console.log(`프레임 캡처: ${video.currentTime.toFixed(2)}초`);
+            const currentTime = video.currentTime * 1000; // 초를 밀리초로 변환
+            if (currentTime - lastCaptureTime >= captureInterval) {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              gif.addFrame(canvas, { copy: true, delay: 42 }); // 약 24fps에 맞춘 delay
+              console.log(`프레임 캡처: ${video.currentTime.toFixed(2)}초`);
+              lastCaptureTime = currentTime;
+            }
           };
 
-          // 비디오의 일부 프레임만 캡처 (예: 처음 2초)
-          video.currentTime = 0;
-          video.play();
-
-          video.addEventListener('timeupdate', function onTimeUpdate() {
-            if (video.currentTime > 2 || video.ended) {
-              video.pause();
-              video.removeEventListener('timeupdate', onTimeUpdate);
+          const intervalId = setInterval(() => {
+            captureFrame();
+            if (video.ended || video.currentTime > 2) { // 처음 2초까지만 캡처
+              clearInterval(intervalId);
               gif.render();
               console.log("GIF 렌더링 시작");
-            } else {
-              captureFrame();
             }
-          });
+          }, 20); // 더 자주 체크하여 정확한 타이밍 캡처
 
           gif.on('finished', (blob) => {
             URL.revokeObjectURL(url);
