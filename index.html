@@ -87,9 +87,9 @@
     }
 
     #imageContainer img {
-      width: 50vw;  /* 가로 크기를 50vw로 조정 */
+      width: 40vw;  /* 가로 크기를 40vw로 추가 축소 */
       height: auto;
-      max-width: 50vw;
+      max-width: 40vw;
       max-height: 50vh;
       display: block;
       margin: 20px auto;
@@ -340,14 +340,14 @@
           console.log("비디오 로드 완료, 변환 시작");
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          // 캔버스 크기를 축소하여 용량을 줄입니다 (예: 원래 크기의 50%)
-          const scaleFactor = 0.5;
+          // 캔버스 크기를 추가로 축소하여 용량을 줄입니다 (예: 원래 크기의 40%)
+          const scaleFactor = 0.4;
           canvas.width = Math.floor(video.videoWidth * scaleFactor);
           canvas.height = Math.floor(video.videoHeight * scaleFactor);
 
           const gif = new GIF({
             workers: 2,
-            quality: 10, // 화질을 낮춰 용량을 줄입니다.
+            quality: 20, // 화질을 더욱 낮춰 용량을 줄입니다. (높은 값일수록 낮은 화질)
             workerScript: 'https://bloupla.net/gif.worker.js', // 자신의 도메인에 호스팅한 gif.worker.js 경로로 수정
             width: canvas.width,
             height: canvas.height
@@ -374,7 +374,7 @@
 
           const intervalId = setInterval(() => {
             captureFrame();
-            if (video.ended || video.currentTime > 2) { // 처음 2초까지만 캡처
+            if (video.currentTime > 2 || video.ended) { // 처음 2초까지만 캡처
               clearInterval(intervalId);
               gif.render();
               console.log("GIF 렌더링 시작");
