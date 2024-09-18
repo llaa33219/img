@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>이미지 공유</title>
-  <!-- ffmpeg.wasm 라이브러리 추가 -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
   <style>
     /* 기존 스타일은 그대로 유지 */
     body {
@@ -157,6 +155,7 @@
   </style>
 </head>
 <body>
+  <script src="https://cdn.jsdelivr.net/npm/gifshot@0.3.2/build/gifshot.min.js"></script>
   <div class="header-content">
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
@@ -262,51 +261,54 @@
       }
     });
 
-    // FFmpeg 초기화 (단일 스레드 모드로 wasm-threads 비활성화)
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ 
-      log: true,
-      corePath: "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg-core/0.12.10/esm/ffmpeg-core.js",  // CDN 경로를 정확하게 지정
-      disableWasmThreads: true,
-      progress: ({ ratio }) => {
-        const percent = Math.round(ratio * 100);
-        statusElement.innerText = `GIF 변환 중: ${percent}%`;
-      }
-    });
-
     // 변환 함수 업데이트
     async function convertVideoToGif(videoFile) {
-      try {
-        if (!ffmpeg.isLoaded()) {
-          statusElement.innerText = "FFmpeg 로드 중...";
-          await ffmpeg.load();
-        }
-
+      return new Promise((resolve, reject) => {
         statusElement.innerText = "비디오를 GIF로 변환 중...";
-        
-        // 비디오 파일을 FFmpeg에 가상 파일 시스템으로 불러오기
-        ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(videoFile));
 
-        // FFmpeg 명령어 실행: 비디오의 처음 2초를 GIF로 변환
-        await ffmpeg.run('-i', 'input.mp4', '-t', '2', '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-gifflags', '+transdiff', 'output.gif');
+        const fileReader = new FileReader();
+        fileReader.onload = function(event) {
+          const videoDataUrl = event.target.result;
 
-        // 변환된 GIF 파일을 가져오기
-        const data = ffmpeg.FS('readFile', 'output.gif');
-
-        // Blob으로 변환
-        const gifBlob = new Blob([data.buffer], { type: 'image/gif' });
-
-        // 메모리 정리
-        ffmpeg.FS('unlink', 'input.mp4');
-        ffmpeg.FS('unlink', 'output.gif');
-
-        return gifBlob;
-      } catch (error) {
-        console.error("GIF 변환 실패:", error);
-        statusElement.innerText = "GIF 변환 실패: " + error.message;
-        return null;
-      }
+          gifshot.createGIF({
+            'video': [videoDataUrl],
+            'gifWidth': 320,
+            'gifHeight': 240,
+            'interval': 0.1,
+            'numFrames': 20,
+            'progressCallback': function(captureProgress) {
+              const percent = Math.round(captureProgress * 100);
+              statusElement.innerText = `GIF 변환 중: ${percent}%`;
+            }
+          }, function(obj) {
+            if (!obj.error) {
+              const gifBlob = dataURLtoBlob(obj.image);
+              resolve(gifBlob);
+            } else {
+              console.error("GIF 변환 실패:", obj.error);
+              statusElement.innerText = "GIF 변환 실패: " + obj.error;
+              reject(obj.error);
+            }
+          });
+        };
+        fileReader.onerror = function(error) {
+          console.error("파일 읽기 실패:", error);
+          statusElement.innerText = "파일 읽기 실패: " + error.message;
+          reject(error);
+        };
+        fileReader.readAsDataURL(videoFile);
+      });
     }
+
+    function dataURLtoBlob(dataurl) {
+      const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+      while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], {type:mime});
+    }
+
 
     // 파일 업로드
     uploadButton.addEventListener('click', async () => {
