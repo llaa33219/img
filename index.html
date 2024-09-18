@@ -270,25 +270,56 @@
         fileReader.onload = function(event) {
           const videoDataUrl = event.target.result;
 
-          gifshot.createGIF({
-            'video': [videoDataUrl],
-            'gifWidth': 320,
-            'gifHeight': 240,
-            'interval': 0.1,
-            'numFrames': 20,
-            'progressCallback': function(captureProgress) {
-              const percent = Math.round(captureProgress * 100);
-              statusElement.innerText = `GIF 변환 중: ${percent}%`;
+          const videoElement = document.createElement('video');
+          videoElement.src = videoDataUrl;
+
+          videoElement.addEventListener('loadedmetadata', function() {
+            const videoDuration = videoElement.duration; // 비디오 길이 (초 단위)
+            const videoWidth = videoElement.videoWidth;
+            const videoHeight = videoElement.videoHeight;
+
+            // 가로세로 비율 유지하며 GIF 해상도 조정 (최대 너비 설정)
+            const maxGifWidth = 320; // 원하는 최대 너비 (픽셀 단위)
+            let gifWidth = videoWidth;
+            let gifHeight = videoHeight;
+
+            if (videoWidth > maxGifWidth) {
+              const aspectRatio = videoWidth / videoHeight;
+              gifWidth = maxGifWidth;
+              gifHeight = Math.round(maxGifWidth / aspectRatio);
             }
-          }, function(obj) {
-            if (!obj.error) {
-              const gifBlob = dataURLtoBlob(obj.image);
-              resolve(gifBlob);
-            } else {
-              console.error("GIF 변환 실패:", obj.error);
-              statusElement.innerText = "GIF 변환 실패: " + obj.error;
-              reject(obj.error);
-            }
+
+            // 비디오 길이에 맞춰 프레임 수와 프레임 지속 시간 설정
+            const frameRate = 10; // 초당 프레임 수 (fps)
+            const numFrames = Math.floor(videoDuration * frameRate);
+            const frameDuration = 1000 / frameRate; // 밀리초 단위
+
+            gifshot.createGIF({
+              'video': [videoDataUrl],
+              'gifWidth': gifWidth,
+              'gifHeight': gifHeight,
+              'numFrames': numFrames,
+              'frameDuration': frameDuration,
+              'progressCallback': function(captureProgress) {
+                const percent = Math.round(captureProgress * 100);
+                statusElement.innerText = `GIF 변환 중: ${percent}%`;
+              }
+            }, function(obj) {
+              if (!obj.error) {
+                const gifBlob = dataURLtoBlob(obj.image);
+                resolve(gifBlob);
+              } else {
+                console.error("GIF 변환 실패:", obj.error);
+                statusElement.innerText = "GIF 변환 실패: " + obj.error;
+                reject(obj.error);
+              }
+            });
+          });
+
+          videoElement.addEventListener('error', function(error) {
+            console.error("비디오 메타데이터 로드 실패:", error);
+            statusElement.innerText = "비디오 메타데이터 로드 실패: " + error.message;
+            reject(error);
           });
         };
         fileReader.onerror = function(error) {
