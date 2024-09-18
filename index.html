@@ -386,7 +386,7 @@
             }
           }
 
-          const uniqueName = Math.random().toString(36).substring(2, 8) + (isVideo ? '.gif' : '.' + fileExtension);
+          const uniqueName = Math.random().toString(36).substring(2, 8);
           console.log(`Uploading as: ${uniqueName}`);
           const storageRef = ref(storage, uniqueName);
           await uploadBytes(storageRef, uploadFile);
