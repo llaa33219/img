@@ -185,9 +185,6 @@
   </style>
 </head>
 <body>
-  <!-- NSFWJS 라이브러리 추가 (제거) -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/nsfwjs@2.4.0/dist/nsfwjs.min.js"></script> -->
-  
   <div class="header-content">
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
@@ -208,14 +205,15 @@
 
   <div id="imageContainer"></div>
 
+  <!-- Firebase SDKs -->
   <script type="module">
-    // ESM 방식으로 NSFWJS 가져오기
-    import * as nsfwjs from 'https://cdn.jsdelivr.net/npm/nsfwjs@2.4.0/dist/nsfwjs.esm.js';
+    // Firebase 및 기타 라이브러리 가져오기
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
+    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE",
       authDomain: "imgshare-2.firebaseapp.com",
@@ -226,11 +224,13 @@
       measurementId: "G-C97WZLE7J0"
     };
 
+    // Firebase 초기화
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
     const auth = getAuth();
 
+    // 익명 로그인
     signInAnonymously(auth).then(() => {
       console.log("익명 로그인 성공");
     }).catch((error) => {
@@ -246,25 +246,8 @@
     const toggleButton = document.getElementById('toggleButton');
     const statusElement = document.getElementById('status');
 
-    let nsfwModel;
-
-    // NSFWJS 모델 로드
-    async function loadNSFWModel() {
-      statusElement.innerText = "모델을 로드 중...";
-      try {
-        // 모델 URL을 지정하지 않고 기본 경로 사용
-        nsfwModel = await nsfwjs.load();
-        statusElement.innerText = "모델 로드 완료!";
-      } catch (error) {
-        console.error("모델 로드 실패:", error);
-        statusElement.innerText = "모델 로드 실패: " + error.message;
-      }
-    }
-
-    window.onload = async () => {
-      await loadNSFWModel();
-      loadImageFromUrl();
-    };
+    // Google Cloud Vision API 키 설정
+    const apiKey = 'AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE'; // 여기에 당신의 Cloud Vision API 키를 입력하세요.
 
     // 파일 선택 버튼 클릭 시 파일 입력 열기
     fileSelectButton.addEventListener('click', () => {
@@ -399,34 +382,62 @@
       return new Blob([u8arr], { type: mime });
     }
 
-    // 이미지 안전성 검사 점수 반환 함수
+    // 이미지 안전성 검사 점수 반환 함수 (Google Cloud Vision API 사용)
     async function getImageSafetyScore(imageFile) {
       return new Promise((resolve, reject) => {
-        const img = new Image();
         const reader = new FileReader();
 
         reader.onload = async function(event) {
-          img.src = event.target.result;
-          img.onload = async function() {
-            try {
-              const predictions = await nsfwModel.classify(img);
-              const inappropriateCategories = ['Porn', 'Sexy', 'Hentai', 'Violence']; // 'Violence' 추가
-              let maxProbability = 0;
+          const base64Image = event.target.result.split(',')[1]; // base64 데이터만 추출
 
-              predictions.forEach(prediction => {
-                if (inappropriateCategories.includes(prediction.className)) {
-                  if (prediction.probability > maxProbability) {
-                    maxProbability = prediction.probability;
+          try {
+            statusElement.innerText = "이미지 분석 중...";
+            const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                requests: [
+                  {
+                    image: {
+                      content: base64Image
+                    },
+                    features: [
+                      {
+                        type: "SAFE_SEARCH_DETECTION"
+                      }
+                    ]
                   }
-                }
-              });
+                ]
+              })
+            });
 
-              resolve(maxProbability);
-            } catch (error) {
-              console.error("이미지 분석 중 오류 발생:", error);
-              reject(error);
+            const result = await response.json();
+
+            if (response.ok) {
+              const safeSearch = result.responses[0].safeSearchAnnotation;
+              console.log(safeSearch);
+
+              const { adult, violence, racy } = safeSearch;
+
+              // 안전성 평가 기준 설정
+              const unsafeLevels = ['LIKELY', 'VERY_LIKELY'];
+              const isCensored = unsafeLevels.includes(adult) ||
+                                 unsafeLevels.includes(violence) ||
+                                 unsafeLevels.includes(racy);
+
+              resolve(isCensored);
+            } else {
+              console.error("API 오류:", result);
+              statusElement.innerText = "이미지 분석 중 오류가 발생했습니다.";
+              reject("API 오류");
             }
-          };
+          } catch (error) {
+            console.error("오류 발생:", error);
+            statusElement.innerText = "이미지 분석 중 오류가 발생했습니다.";
+            reject(error);
+          }
         };
 
         reader.onerror = function(error) {
@@ -434,13 +445,7 @@
           reject(error);
         };
 
-        // Blob 객체인 경우 File 객체로 변환
-        if (imageFile instanceof Blob && !(imageFile instanceof File)) {
-          const file = new File([imageFile], "temp.jpg", { type: imageFile.type });
-          reader.readAsDataURL(file);
-        } else {
-          reader.readAsDataURL(imageFile);
-        }
+        reader.readAsDataURL(imageFile);
       });
     }
 
@@ -474,17 +479,12 @@
         }
 
         try {
-          statusElement.innerText = "이미지 안전성 검사 중...";
-          
-          let safetyScore = 0;
           let uploadFile = mediaFile;
           let needsCensorship = true; // 기본적으로 검열을 강하게 적용
 
           if (isImage) {
-            safetyScore = await getImageSafetyScore(mediaFile);
-            if (safetyScore < 0.3) { // 임계값을 낮춰서 안전하다고 판단되는 경우만 검열 해제
-              needsCensorship = false;
-            }
+            const isCensored = await getImageSafetyScore(mediaFile);
+            needsCensorship = isCensored;
           }
 
           if (isVideo) {
@@ -496,10 +496,8 @@
             }
 
             // 변환된 GIF의 안전성 검사
-            safetyScore = await getImageSafetyScore(uploadFile);
-            if (safetyScore < 0.3) { // 임계값을 낮춰서 안전하다고 판단되는 경우만 검열 해제
-              needsCensorship = false;
-            }
+            const isCensored = await getImageSafetyScore(uploadFile);
+            needsCensorship = isCensored;
           }
 
           statusElement.innerText = "업로드 중...";
@@ -654,6 +652,14 @@
         console.error("이미지 로드 실패:", error);
       }
     }
+
+    // 페이지 로드 시 이미지 로드
+    window.onload = async () => {
+      await loadImageFromUrl();
+    };
   </script>
+
+  <!-- gifshot 라이브러리 추가 (비디오를 GIF로 변환하기 위해 필요) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
 </body>
 </html>
