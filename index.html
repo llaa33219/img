@@ -529,6 +529,33 @@
       alert('링크가 복사되었습니다!');
     });
 
+    // URL에서 이미지 로드
+    async function loadImageFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const imageNamesParam = urlParams.get('');
+      if (!imageNamesParam) return;
+
+      const imageNames = imageNamesParam.split(',');
+
+      if (imageNames.length > 0) {
+        const imageContainer = document.getElementById('imageContainer');
+        imageContainer.innerHTML = '';
+
+        for (const imageName of imageNames) {
+          const trimmedName = imageName.trim();
+          const storageRef = ref(storage, trimmedName);
+          try {
+            const downloadURL = await getDownloadURL(storageRef);
+            await displayMedia(trimmedName, downloadURL);
+          } catch (error) {
+            console.error("이미지 로드 실패:", error);
+          }
+        }
+
+        // 업로드 UI 숨김 처리
+        hideUploadUI();
+      }
+    }
 
     // 업로드 UI 숨기는 함수
     function hideUploadUI() {
