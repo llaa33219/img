@@ -606,7 +606,7 @@
             // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
             const censorshipMessage = document.createElement('div');
             censorshipMessage.classList.add('censorship-message');
-            censorshipMessage.innerText = "이 이미지는 검열되었습니다.";
+            censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
 
             imageContainer.appendChild(censorshipMessage);
           } else {
@@ -625,7 +625,7 @@
             // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
             const censorshipMessage = document.createElement('div');
             censorshipMessage.classList.add('censorship-message');
-            censorshipMessage.innerText = "이 GIF는 검열되었습니다.";
+            censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
 
             imageContainer.appendChild(censorshipMessage);
           } else {
