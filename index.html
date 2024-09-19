@@ -603,20 +603,12 @@
 
         if (isImage) {
           if (needsCensorship) {
-            // 검열 적용 (검열 텍스트 오버레이)
-            const wrapper = document.createElement('div');
-            wrapper.classList.add('censored');
+            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
+            const censorshipMessage = document.createElement('div');
+            censorshipMessage.classList.add('censorship-message');
+            censorshipMessage.innerText = "이 이미지는 검열되었습니다.";
 
-            const censoredImg = document.createElement('img');
-            censoredImg.src = URL.createObjectURL(blob);
-
-            const overlay = document.createElement('div');
-            overlay.classList.add('overlay');
-            overlay.innerText = "검열됨";
-
-            wrapper.appendChild(censoredImg);
-            wrapper.appendChild(overlay);
-            imageContainer.appendChild(wrapper);
+            imageContainer.appendChild(censorshipMessage);
           } else {
             const imgElement = document.createElement('img');
             imgElement.src = URL.createObjectURL(blob);
@@ -630,20 +622,12 @@
         } else {
           // 모든 비디오는 GIF로 변환되므로 이미지로 처리
           if (needsCensorship) {
-            // 검열 적용 (검열 텍스트 오버레이)
-            const wrapper = document.createElement('div');
-            wrapper.classList.add('censored');
+            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
+            const censorshipMessage = document.createElement('div');
+            censorshipMessage.classList.add('censorship-message');
+            censorshipMessage.innerText = "이 GIF는 검열되었습니다.";
 
-            const censoredImg = document.createElement('img');
-            censoredImg.src = URL.createObjectURL(blob);
-
-            const overlay = document.createElement('div');
-            overlay.classList.add('overlay');
-            overlay.innerText = "검열됨";
-
-            wrapper.appendChild(censoredImg);
-            wrapper.appendChild(overlay);
-            imageContainer.appendChild(wrapper);
+            imageContainer.appendChild(censorshipMessage);
           } else {
             const imgElement = document.createElement('img');
             imgElement.src = URL.createObjectURL(blob);
