@@ -252,7 +252,7 @@
       statusElement.innerText = "모델을 로드 중...";
       try {
         // 올바른 모델 URL을 지정 (TensorFlow.js의 공개 모델 URL 사용)
-        nsfwModel = await nsfwjs.load('https://storage.googleapis.com/tfjs-models/savedmodel/nsfwjs/model.json');
+        nsfwModel = await nsfwjs.load();
         statusElement.innerText = "모델 로드 완료!";
       } catch (error) {
         console.error("모델 로드 실패:", error);
