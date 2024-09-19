@@ -422,10 +422,17 @@
               const { adult, violence, racy } = safeSearch;
 
               // 안전성 평가 기준 설정
-              const unsafeLevels = ['LIKELY', 'VERY_LIKELY'];
-              const isCensored = unsafeLevels.includes(adult) ||
-                                 unsafeLevels.includes(violence) ||
-                                 unsafeLevels.includes(racy);
+              // 가능성이 조금이라도 있는 경우에 검열
+              const unsafeLevels = ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'];
+              const isCensored = unsafeLevels.includes(adult) ||  // 성인 콘텐츠 (조금이라도 야하면)
+                                unsafeLevels.includes(violence) || // 폭력성 (잔인한 장면)
+                                unsafeLevels.includes(racy);      // 음란성 (성적 묘사)
+
+              if (isCensored) {
+                console.log('검열 필요: 부적절한 콘텐츠 감지');
+              } else {
+                console.log('검열 통과: 적절한 콘텐츠');
+              }
 
               resolve(isCensored);
             } else {
