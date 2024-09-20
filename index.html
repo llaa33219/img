@@ -538,7 +538,7 @@
 
       if (skippedFiles.length > 0) {
         const skippedList = skippedFiles.join(', ');
-        alert(`다음 파일은 부적절하여 업로드되지 않았습니다: ${skippedList}`);
+        statusElement.innerText = "부적절한 이미지가 감지되었습니다.";
       }
     });
 
