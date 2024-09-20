@@ -467,6 +467,7 @@
       const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
       const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
       let uploadedNames = [];
+      let skippedFiles = []; // 업로드를 건너뛴 파일 목록
 
       for (const mediaFile of mediaFiles) {
         const fileNameParts = mediaFile.name.split('.');
@@ -487,7 +488,7 @@
 
         try {
           let uploadFile = mediaFile;
-          let needsCensorship = true; // 기본적으로 검열을 강하게 적용
+          let needsCensorship = false; // 기본적으로 검열을 강하게 적용
 
           if (isImage) {
             const isCensored = await getImageSafetyScore(mediaFile);
@@ -507,6 +508,12 @@
             needsCensorship = isCensored;
           }
 
+          if (needsCensorship) {
+            console.log(`검열 필요: ${mediaFile.name}`);
+            skippedFiles.push(mediaFile.name); // 건너뛴 파일 목록에 추가
+            continue; // 다음 파일로 넘어감
+          }
+
           statusElement.innerText = "업로드 중...";
           const uniqueName = Math.random().toString(36).substring(2, 15); // 고유 이름 생성
           console.log(`Uploading as: ${uniqueName}`);
@@ -523,9 +530,16 @@
         }
       }
 
-      statusElement.innerText = "업로드 성공!";
-      const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
-      document.getElementById('linkBox').value = imageUrl;
+      if (uploadedNames.length > 0) {
+        const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
+        document.getElementById('linkBox').value = imageUrl;
+        statusElement.innerText = "업로드 성공!";
+      }
+
+      if (skippedFiles.length > 0) {
+        const skippedList = skippedFiles.join(', ');
+        alert(`다음 파일은 부적절하여 업로드되지 않았습니다: ${skippedList}`);
+      }
     });
 
     // 링크 복사 기능
