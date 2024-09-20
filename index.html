@@ -406,6 +406,9 @@
                     features: [
                       {
                         type: "SAFE_SEARCH_DETECTION"
+                      },
+                      {
+                        type: "FACE_DETECTION"
                       }
                     ]
                   }
@@ -417,16 +420,25 @@
 
             if (response.ok) {
               const safeSearch = result.responses[0].safeSearchAnnotation;
+              const faceDetection = result.responses[0].faceAnnotations;
+
               console.log(safeSearch);
+              console.log(faceDetection);
 
               const { adult, violence, racy } = safeSearch;
 
               // 안전성 평가 기준 설정
               // 가능성이 조금이라도 있는 경우에 검열
               const unsafeLevels = ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'];
-              const isCensored = unsafeLevels.includes(adult) ||  // 성인 콘텐츠 (조금이라도 야하면)
-                                unsafeLevels.includes(violence) || // 폭력성 (잔인한 장면)
-                                unsafeLevels.includes(racy);      // 음란성 (성적 묘사)
+              let isCensored = unsafeLevels.includes(adult) ||  // 성인 콘텐츠
+                                unsafeLevels.includes(violence) || // 폭력성
+                                unsafeLevels.includes(racy);      // 음란성
+
+              // 얼굴 검출 추가: 얼굴이 검출되면 예외적으로 검열
+              if (faceDetection && faceDetection.length > 0) {
+                console.log('얼굴이 감지되어 검열합니다.');
+                isCensored = true;
+              }
 
               if (isCensored) {
                 console.log('검열 필요: 부적절한 콘텐츠 감지');
