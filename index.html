@@ -538,7 +538,7 @@
 
       if (skippedFiles.length > 0) {
         const skippedList = skippedFiles.join(', ');
-        statusElement.innerText = "부적절한 이미지가 감지되었습니다.";
+        statusElement.innerText = "부적절한 이미지가 감지되었습니다. ${skippedList}";
       }
     });
 
