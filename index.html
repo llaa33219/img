@@ -431,14 +431,27 @@
               console.log(faceDetection);
               console.log(labels);
 
-              const { adult, violence, racy } = safeSearch;
+              // 이미지가 일러스트레이션인지 사진인지 판단
+              let isIllustration = false;
+              if (labels && labels.length > 0) {
+                const illustrationKeywords = ['cartoon', 'illustration', 'drawing', 'comic', 'sketch', 'graphic'];
+                isIllustration = labels.some(label => 
+                  illustrationKeywords.some(keyword => label.description.toLowerCase().includes(keyword))
+                );
+              }
+
+              if (isIllustration) {
+                console.log('이미지가 일러스트레이션으로 판단되었습니다.');
+              } else {
+                console.log('이미지가 사진으로 판단되었습니다.');
+              }
 
               // 검열 강도 조정: 'LIKELY' 이상만 포함
               const unsafeLevels = ['LIKELY', 'VERY_LIKELY'];
 
-              let isCensored = unsafeLevels.includes(adult) ||  // 성인 콘텐츠
-                                unsafeLevels.includes(violence) || // 폭력성
-                                unsafeLevels.includes(racy);      // 음란성
+              // 기본적으로 성인 콘텐츠와 폭력성만 체크
+              let isCensored = unsafeLevels.includes(safeSearch.adult) ||  // 성인 콘텐츠
+                                unsafeLevels.includes(safeSearch.violence);   // 폭력성
 
               // 얼굴 검출 추가: 얼굴이 검출되면 예외적으로 검열
               if (faceDetection && faceDetection.length > 0) {
@@ -446,8 +459,8 @@
                 isCensored = true;
               }
 
-              // 라벨 검열 추가: 특정 정치적, 비하적, 잔인한 키워드 검출
-              if (labels && labels.length > 0) {
+              // 일러스트레이션이 아닌 경우에만 추가 검열 기준 적용
+              if (!isIllustration && labels && labels.length > 0) {
                 const politicalKeywords = ['정당', '정치', '선거', '국회의원'];
                 const derogatoryKeywords = ['비하', '혐오'];
                 const cruelKeywords = ['잔인', '피해', '학대', '고문', '잔혹'];
