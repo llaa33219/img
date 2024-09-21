@@ -409,6 +409,10 @@
                       },
                       {
                         type: "FACE_DETECTION"
+                      },
+                      {
+                        type: "LABEL_DETECTION",
+                        maxResults: 15 // 필요한 경우 결과 수 조정
                       }
                     ]
                   }
@@ -421,15 +425,17 @@
             if (response.ok) {
               const safeSearch = result.responses[0].safeSearchAnnotation;
               const faceDetection = result.responses[0].faceAnnotations;
+              const labels = result.responses[0].labelAnnotations;
 
               console.log(safeSearch);
               console.log(faceDetection);
+              console.log(labels);
 
               const { adult, violence, racy } = safeSearch;
 
-              // 안전성 평가 기준 설정
-              // 가능성이 조금이라도 있는 경우에 검열
-              const unsafeLevels = ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'];
+              // 검열 강도 조정: 'LIKELY' 이상만 포함
+              const unsafeLevels = ['LIKELY', 'VERY_LIKELY'];
+
               let isCensored = unsafeLevels.includes(adult) ||  // 성인 콘텐츠
                                 unsafeLevels.includes(violence) || // 폭력성
                                 unsafeLevels.includes(racy);      // 음란성
@@ -438,6 +444,40 @@
               if (faceDetection && faceDetection.length > 0) {
                 console.log('얼굴이 감지되어 검열합니다.');
                 isCensored = true;
+              }
+
+              // 라벨 검열 추가: 특정 정치적, 비하적, 잔인한 키워드 검출
+              if (labels && labels.length > 0) {
+                const politicalKeywords = ['정당', '정치', '선거', '국회의원'];
+                const derogatoryKeywords = ['비하', '혐오'];
+                const cruelKeywords = ['잔인', '피해', '학대', '고문', '잔혹'];
+
+                const detectedPolitical = labels.some(label => 
+                  politicalKeywords.some(keyword => label.description.includes(keyword))
+                );
+
+                const detectedDerogatory = labels.some(label => 
+                  derogatoryKeywords.some(keyword => label.description.includes(keyword))
+                );
+
+                const detectedCruel = labels.some(label => 
+                  cruelKeywords.some(keyword => label.description.includes(keyword))
+                );
+
+                if (detectedPolitical) {
+                  console.log('정치적 콘텐츠가 감지되어 검열합니다.');
+                  isCensored = true;
+                }
+
+                if (detectedDerogatory) {
+                  console.log('비하적 콘텐츠가 감지되어 검열합니다.');
+                  isCensored = true;
+                }
+
+                if (detectedCruel) {
+                  console.log('잔인한 콘텐츠가 감지되어 검열합니다.');
+                  isCensored = true;
+                }
               }
 
               if (isCensored) {
