@@ -6,8 +6,6 @@
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>이미지 공유</title>
   <style>
-    /* 기존 스타일 유지 및 추가 스타일 적용 */
-
     /* 기본 스타일 */
     body {
       display: flex;
@@ -33,7 +31,7 @@
       border-radius: 20px;
       padding: 10px 20px;
       margin: 20px 10px 20px 0; /* 좌우 간격 조정 */
-      width: 40px; /* 크기를 아이콘 버튼에 맞게 조정 */
+      width: 40px; /* 아이콘 버튼에 맞게 크기 조정 */
       height: 40px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
       cursor: pointer;
@@ -155,10 +153,6 @@
       margin-right: 20px;
     }
 
-    #actionButtons {
-      display: none; /* 초기 상태 숨김 */
-    }
-
     .hidden {
       display: none;
     }
@@ -173,6 +167,9 @@
       }
       .header-content {
         font-size: 16px;
+      }
+      .header-content button {
+        margin-left: 5px; /* 작은 화면에서 버튼 간격 조정 */
       }
     }
 
@@ -212,8 +209,8 @@
     <h1>이미지 공유</h1>
     <button class="toggle-button" id="toggleButton">+</button>
     <!-- 복사 및 다운로드 버튼을 별도의 div 없이 독립적으로 배치 -->
-    <button class="download-button" id="downloadButton" title="다운로드"></button>
-    <button class="copy-button" id="copyLinksButton" title="복사"></button>
+    <button class="download-button" id="downloadButton" title="다운로드" aria-label="다운로드"></button>
+    <button class="copy-button" id="copyLinksButton" title="복사" aria-label="복사"></button>
   </div>
 
   <div class="upload-container" id="uploadContainer">
@@ -224,7 +221,7 @@
     <p id="status"></p>
     <div class="link-container">
       <input type="text" id="linkBox" readonly>
-      <button class="copy-button" id="copyButton"></button>
+      <button class="copy-button" id="copyButton" title="링크 복사" aria-label="링크 복사"></button>
     </div>
   </div>
 
@@ -736,7 +733,7 @@
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
       toggleButton.style.display = 'flex'; // + 버튼 보이기
-      // actionButtons는 더 이상 사용되지 않으므로 관련 코드 제거
+      // 다운로드 및 복사 버튼은 항상 보이도록 설정
     }
 
     // UI 표시/숨김 토글 버튼 클릭 시 처리
@@ -744,11 +741,9 @@
       if (uploadContainer.classList.contains('hidden')) {
         uploadContainer.classList.remove('hidden');
         toggleButton.innerText = '-';
-        // downloadButton 및 copyLinksButton은 항상 보이도록 설정
       } else {
         uploadContainer.classList.add('hidden');
         toggleButton.innerText = '+';
-        // downloadButton 및 copyLinksButton은 항상 보이도록 설정
       }
     });
 
