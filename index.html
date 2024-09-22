@@ -125,6 +125,7 @@
       margin-right: 20px;
     }
 
+    /* 토글 버튼 및 액션 버튼 스타일 */
     .toggle-button,
     .action-button {
       background-color: #28a745;
@@ -133,7 +134,7 @@
       border-radius: 50%;
       width: 40px;
       height: 40px;
-      display: none;
+      display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
@@ -158,18 +159,11 @@
 
     /* 새로운 액션 버튼 스타일 */
     .action-buttons {
-      display: none;
+      display: none; /* 기본적으로 숨김 */
       position: absolute;
       right: 0;
       display: flex;
       gap: 10px;
-    }
-
-    .action-buttons .action-button {
-      background-color: #17a2b8;
-      width: 40px;
-      height: 40px;
-      padding: 0;
     }
 
     .action-buttons .action-button.download {
@@ -703,7 +697,7 @@
       }
     });
 
-    // 링크 복사 버튼 기능
+    // 복사 버튼 기능
     copyLinksButton.addEventListener('click', () => {
       const linkBox = document.getElementById('linkBox');
       linkBox.select();
@@ -742,7 +736,7 @@
     // 업로드 UI 숨기는 함수
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
-      toggleButton.style.display = 'flex'; // 숨겨진 + 버튼 보이기
+      toggleButton.style.display = 'flex'; // + 버튼 보이기
       actionButtons.style.display = 'flex'; // 다운로드 및 복사 버튼 보이기
     }
 
