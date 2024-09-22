@@ -116,6 +116,9 @@
       margin-bottom: 20px;
       font-size: 30px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      position: relative;
+      width: 100%;
+      max-width: 800px;
     }
 
     .header-content img {
@@ -137,6 +140,38 @@
       margin-left: 20px;
     }
 
+    /* 새로운 버튼 스타일 */
+    .action-buttons {
+      display: none;
+      position: absolute;
+      right: 0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-buttons button {
+      background-color: #17a2b8;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: white;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .action-buttons button:hover {
+      background-color: #117a8b;
+    }
+
+    .action-buttons button img {
+      width: 20px;
+      height: 20px;
+    }
+
     .hidden {
       display: none;
     }
@@ -150,6 +185,11 @@
       }
       .header-content {
         font-size: 16px;
+      }
+      .action-buttons {
+        flex-direction: column;
+        position: static;
+        margin-top: 10px;
       }
     }
 
@@ -189,6 +229,17 @@
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
     <button class="toggle-button" id="toggleButton">+</button>
+    <!-- 새로운 액션 버튼 컨테이너 -->
+    <div class="action-buttons" id="actionButtons">
+      <button id="downloadButton">
+        <img src="https://img.icons8.com/ios-glyphs/30/ffffff/download.png" alt="Download">
+        다운로드
+      </button>
+      <button id="copyLinksButton">
+        <img src="https://img.icons8.com/ios-glyphs/30/ffffff/copy.png" alt="Copy">
+        복사
+      </button>
+    </div>
   </div>
 
   <div class="upload-container" id="uploadContainer">
@@ -245,6 +296,9 @@
     const uploadContainer = document.getElementById('uploadContainer');
     const toggleButton = document.getElementById('toggleButton');
     const statusElement = document.getElementById('status');
+    const actionButtons = document.getElementById('actionButtons');
+    const downloadButton = document.getElementById('downloadButton');
+    const copyLinksButton = document.getElementById('copyLinksButton');
 
     // Google Cloud Vision API 키 설정
     const apiKey = 'AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE'; // 여기에 당신의 Cloud Vision API 키를 입력하세요.
@@ -615,6 +669,40 @@
       alert('링크가 복사되었습니다!');
     });
 
+    // 다운로드 버튼 기능
+    downloadButton.addEventListener('click', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const imageNamesParam = urlParams.get('');
+      if (!imageNamesParam) return;
+
+      const imageNames = imageNamesParam.split(',');
+
+      for (const imageName of imageNames) {
+        const trimmedName = imageName.trim();
+        const storageRef = ref(storage, trimmedName);
+        try {
+          const downloadURL = await getDownloadURL(storageRef);
+          // Create a temporary link to trigger download
+          const a = document.createElement('a');
+          a.href = downloadURL;
+          a.download = trimmedName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch (error) {
+          console.error("이미지 다운로드 실패:", error);
+        }
+      }
+    });
+
+    // 링크 복사 버튼 기능
+    copyLinksButton.addEventListener('click', () => {
+      const linkBox = document.getElementById('linkBox');
+      linkBox.select();
+      document.execCommand('copy');
+      alert('이미지 링크가 복사되었습니다!');
+    });
+
     // URL에서 이미지 로드
     async function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -647,6 +735,7 @@
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
       toggleButton.style.display = 'flex'; // 숨겨진 + 버튼 보이기
+      actionButtons.style.display = 'flex'; // 다운로드 및 복사 버튼 보이기
     }
 
     // UI 표시/숨김 토글 버튼 클릭 시 처리
@@ -654,9 +743,11 @@
       if (uploadContainer.classList.contains('hidden')) {
         uploadContainer.classList.remove('hidden');
         toggleButton.innerText = '-';
+        actionButtons.style.display = 'none'; // 액션 버튼 숨기기
       } else {
         uploadContainer.classList.add('hidden');
         toggleButton.innerText = '+';
+        actionButtons.style.display = 'flex'; // 액션 버튼 보이기
       }
     });
 
