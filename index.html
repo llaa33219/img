@@ -24,40 +24,38 @@
       align-items: center;
     }
 
-    button {
+    /* 공통 버튼 스타일 */
+    .common-button {
       background-color: #007BFF;
       color: white;
       border: none;
-      border-radius: 20px;
-      padding: 10px 20px;
-      margin: 20px 0;
-      width: 600px;
-      height: 61px;
+      border-radius: 50%; /* 원형 버튼 */
+      padding: 10px;
+      margin: 10px;
+      width: 50px;
+      height: 50px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
       font-weight: bold;
-      font-size: 18px;
-      text-align: center;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    button:hover {
+    .common-button:hover {
       background-color: #005BDD;
       transform: translateY(2px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    button:active {
+    .common-button:active {
       background-color: #0026a3;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    #fileNameDisplay {
-      font-size: 16px;
-      margin-top: 10px;
-      color: #333;
-    }
-
+    /* 링크 박스 스타일 */
     #linkBox {
       width: 500px;
       height: 40px;
@@ -67,6 +65,7 @@
       text-align: center;
     }
 
+    /* 복사 버튼 스타일 */
     .copy-button {
       background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
       background-size: contain;
@@ -125,9 +124,9 @@
       margin-right: 20px;
     }
 
-    /* 토글 버튼 및 액션 버튼 스타일 */
-    .toggle-button,
-    .action-button {
+    /* 액션 버튼 및 토글 버튼 공통 스타일 */
+    /* 기존의 .toggle-button과 .action-button을 통합 */
+    .action-toggle-button {
       background-color: #28a745;
       color: white;
       border: none;
@@ -144,20 +143,18 @@
       transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
     }
 
-    .toggle-button:hover,
-    .action-button:hover {
+    .action-toggle-button:hover {
       background-color: #1e7e34;
       transform: translateY(2px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    .toggle-button:active,
-    .action-button:active {
+    .action-toggle-button:active {
       background-color: #155724;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    /* 액션 버튼 스타일 */
+    /* 액션 버튼 컨테이너 */
     .action-buttons {
       display: none; /* 기본적으로 숨김 */
       position: absolute;
@@ -166,34 +163,27 @@
       gap: 10px;
     }
 
-    .action-buttons .action-button.download {
-      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/download--v1.png');
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 60%;
-    }
-
-    .action-buttons .action-button.copy {
-      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/copy.png');
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 60%;
-    }
-
+    /* 숨김 클래스 */
     .hidden {
       display: none;
     }
 
     @media (max-width: 768px) {
-      button {
-        width: 300px;
+      /* 반응형 디자인 조정 */
+      .common-button {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
       }
+
       #linkBox {
         width: 200px;
       }
+
       .header-content {
         font-size: 16px;
       }
+
       .action-buttons {
         flex-direction: column;
         position: static;
@@ -236,11 +226,13 @@
   <div class="header-content">
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
-    <button class="toggle-button" id="toggleButton">+</button>
+    <!-- 토글 버튼을 공통 클래스인 action-toggle-button으로 변경 -->
+    <button class="action-toggle-button" id="toggleButton">+</button>
     <!-- 액션 버튼 컨테이너 -->
     <div class="action-buttons" id="actionButtons">
-      <button class="action-button download" id="downloadButton" title="다운로드"></button>
-      <button class="action-button copy" id="copyLinksButton" title="복사"></button>
+      <!-- 엑션 버튼들도 공통 클래스인 action-toggle-button을 사용하고, 아이콘을 텍스트로 대체 -->
+      <button class="action-toggle-button" id="downloadButton" title="다운로드">⬇️</button>
+      <button class="action-toggle-button" id="copyLinksButton" title="복사">📋</button>
     </div>
   </div>
 
@@ -258,7 +250,7 @@
 
   <div id="imageContainer"></div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs 및 기타 스크립트는 기존과 동일하게 유지 -->
   <script type="module">
     // Firebase 및 기타 라이브러리 가져오기
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
