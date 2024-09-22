@@ -6,6 +6,8 @@
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>이미지 공유</title>
   <style>
+    /* 기존 스타일 유지 및 추가 스타일 적용 */
+
     /* 기본 스타일 */
     body {
       display: flex;
@@ -30,28 +32,67 @@
       border: none;
       border-radius: 20px;
       padding: 10px 20px;
-      margin: 20px 0;
-      width: 600px;
-      height: 61px;
+      margin: 20px 10px 20px 0; /* 좌우 간격 조정 */
+      width: 40px; /* 크기를 아이콘 버튼에 맞게 조정 */
+      height: 40px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
       font-weight: bold;
       font-size: 18px;
       text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    button:hover {
-      background-color: #005BDD;
+    /* + 버튼 스타일 */
+    .toggle-button {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+      margin-left: 10px;
+    }
+
+    /* 복사 및 다운로드 버튼 스타일 */
+    .copy-button,
+    .download-button {
+      background-color: #28a745;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      background-size: 60%;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin-left: 10px;
+    }
+
+    .copy-button {
+      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/copy.png');
+    }
+
+    .download-button {
+      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/download--v1.png');
+    }
+
+    /* 버튼 호버 및 액티브 상태 */
+    .toggle-button:hover,
+    .copy-button:hover,
+    .download-button:hover {
+      background-color: #1e7e34;
       transform: translateY(2px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    button:active {
-      background-color: #0026a3;
+    .toggle-button:active,
+    .copy-button:active,
+    .download-button:active {
+      background-color: #155724;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
+    /* 기타 스타일 유지 */
     #fileNameDisplay {
       font-size: 16px;
       margin-top: 10px;
@@ -65,17 +106,6 @@
       font-size: 16px;
       padding: 10px;
       text-align: center;
-    }
-
-    .copy-button {
-      background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
-      background-size: contain;
-      border: none;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      margin-left: 10px;
-      vertical-align: middle;
     }
 
     .link-container {
@@ -125,59 +155,8 @@
       margin-right: 20px;
     }
 
-    /* 토글 버튼 및 액션 버튼 스타일 */
-    .toggle-button,
-    .action-button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-size: 24px;
-      margin-left: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-    }
-
-    .toggle-button:hover,
-    .action-button:hover {
-      background-color: #1e7e34;
-      transform: translateY(2px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .toggle-button:active,
-    .action-button:active {
-      background-color: #155724;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    /* 액션 버튼 스타일 */
-    .action-buttons {
-      display: none; /* 기본적으로 숨김 */
-      position: absolute;
-      right: 0;
-      display: flex;
-      gap: 10px;
-    }
-
-    .action-buttons .action-button.download {
-      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/download--v1.png');
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 60%;
-    }
-
-    .action-buttons .action-button.copy {
-      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/copy.png');
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 60%;
+    #actionButtons {
+      display: none; /* 초기 상태 숨김 */
     }
 
     .hidden {
@@ -186,7 +165,8 @@
 
     @media (max-width: 768px) {
       button {
-        width: 300px;
+        width: 40px;
+        height: 40px;
       }
       #linkBox {
         width: 200px;
@@ -194,24 +174,18 @@
       .header-content {
         font-size: 16px;
       }
-      .action-buttons {
-        flex-direction: column;
-        position: static;
-        margin-top: 10px;
-      }
     }
 
     /* 수정된 검열된 이미지 스타일 */
     .censored {
       position: relative;
       display: inline-block;
-      /* 이미지 자체는 숨기고 오버레이로만 표시 */
       width: 100%;
       height: 100%;
     }
 
     .censored img {
-      display: none; /* 이미지는 숨김 */
+      display: none;
     }
 
     .censored .overlay {
@@ -220,7 +194,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.8); /* 검열 배경 */
+      background-color: rgba(0, 0, 0, 0.8);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -237,11 +211,9 @@
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
     <button class="toggle-button" id="toggleButton">+</button>
-    <!-- 액션 버튼 컨테이너 -->
-    <div class="action-buttons" id="actionButtons">
-      <button class="action-button download" id="downloadButton" title="다운로드"></button>
-      <button class="action-button copy" id="copyLinksButton" title="복사"></button>
-    </div>
+    <!-- 복사 및 다운로드 버튼을 별도의 div 없이 독립적으로 배치 -->
+    <button class="download-button" id="downloadButton" title="다운로드"></button>
+    <button class="copy-button" id="copyLinksButton" title="복사"></button>
   </div>
 
   <div class="upload-container" id="uploadContainer">
@@ -258,7 +230,7 @@
 
   <div id="imageContainer"></div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs 및 기타 스크립트 유지 -->
   <script type="module">
     // Firebase 및 기타 라이브러리 가져오기
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
@@ -298,7 +270,6 @@
     const uploadContainer = document.getElementById('uploadContainer');
     const toggleButton = document.getElementById('toggleButton');
     const statusElement = document.getElementById('status');
-    const actionButtons = document.getElementById('actionButtons');
     const downloadButton = document.getElementById('downloadButton');
     const copyLinksButton = document.getElementById('copyLinksButton');
 
@@ -765,7 +736,7 @@
     function hideUploadUI() {
       uploadContainer.classList.add('hidden');
       toggleButton.style.display = 'flex'; // + 버튼 보이기
-      actionButtons.style.display = 'flex'; // 다운로드 및 복사 버튼 보이기
+      // actionButtons는 더 이상 사용되지 않으므로 관련 코드 제거
     }
 
     // UI 표시/숨김 토글 버튼 클릭 시 처리
@@ -773,11 +744,11 @@
       if (uploadContainer.classList.contains('hidden')) {
         uploadContainer.classList.remove('hidden');
         toggleButton.innerText = '-';
-        actionButtons.style.display = 'none'; // 액션 버튼 숨기기
+        // downloadButton 및 copyLinksButton은 항상 보이도록 설정
       } else {
         uploadContainer.classList.add('hidden');
         toggleButton.innerText = '+';
-        actionButtons.style.display = 'flex'; // 액션 버튼 보이기
+        // downloadButton 및 copyLinksButton은 항상 보이도록 설정
       }
     });
 
