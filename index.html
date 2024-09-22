@@ -125,9 +125,8 @@
       margin-right: 20px;
     }
 
-    /* 토글 버튼 및 액션 버튼 스타일 */
-    .toggle-button,
-    .action-button {
+    /* 공통 액션 버튼 스타일 */
+    .action-style {
       background-color: #28a745;
       color: white;
       border: none;
@@ -144,62 +143,62 @@
       transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
     }
 
-    .toggle-button:hover,
-    .action-button:hover {
+    .action-style:hover {
       background-color: #1e7e34;
       transform: translateY(2px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    .toggle-button:active,
-    .action-button:active {
+    .action-style:active {
       background-color: #155724;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    /* 액션 버튼 스타일 */
-    .action-buttons {
-      display: none; /* 기본적으로 숨김 */
-      position: absolute;
-      right: 0;
-      display: flex;
-      gap: 10px;
-    }
-
-    .action-buttons .action-button.download {
+    /* 개별 액션 버튼 스타일 */
+    .download {
       background-image: url('https://img.icons8.com/ios-filled/24/ffffff/download--v1.png');
       background-repeat: no-repeat;
       background-position: center;
       background-size: 60%;
     }
 
-    .action-buttons .action-button.copy {
+    .copy {
       background-image: url('https://img.icons8.com/ios-filled/24/ffffff/copy.png');
       background-repeat: no-repeat;
       background-position: center;
       background-size: 60%;
     }
 
-    .hidden {
+    /* toggle-button 개별 스타일 */
+    .toggle-button {
+      background-color: #28a745; /* 필요 시 조정 */
+      border-radius: 20px; /* + 버튼은 원형이 아닐 경우 */
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+      text-align: center;
+      padding: 0;
+    }
+
+    /* 버튼 기본 숨김 처리 */
+    .header-content .toggle-button,
+    .header-content .action-button {
       display: none;
     }
 
-    @media (max-width: 768px) {
-      button {
-        width: 300px;
-      }
-      #linkBox {
-        width: 200px;
-      }
-      .header-content {
-        font-size: 16px;
-      }
-      .action-buttons {
-        flex-direction: column;
-        position: static;
-        margin-top: 10px;
-      }
+    /* URL 로드 시 버튼 표시 */
+    .header-content.url-loaded .toggle-button,
+    .header-content.url-loaded .action-button {
+      display: flex;
     }
+
+    /* 업로드 UI가 숨겨졌을 때 버튼 표시 */
+    .header-content.upload-hidden .toggle-button,
+    .header-content.upload-hidden .action-button {
+      display: flex;
+    }
+
+    /* 기타 기존 스타일들 ... */
 
     /* 수정된 검열된 이미지 스타일 */
     .censored {
@@ -230,18 +229,53 @@
       text-shadow: 2px 2px 4px #000;
       pointer-events: none;
     }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      button {
+        width: 300px;
+      }
+      #linkBox {
+        width: 200px;
+      }
+      .header-content {
+        font-size: 16px;
+      }
+      /* .action-buttons 관련 스타일은 이미 제거되었으므로 여기서 추가적인 반응형 스타일을 적용할 수 있습니다 */
+    }
+
+    /* 불필요한 .action-buttons 관련 스타일 제거 */
+    .action-buttons {
+      display: none; /* 기본적으로 숨김 */
+      position: absolute;
+      right: 0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-buttons .action-button.download {
+      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/download--v1.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 60%;
+    }
+
+    .action-buttons .action-button.copy {
+      background-image: url('https://img.icons8.com/ios-filled/24/ffffff/copy.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 60%;
+    }
   </style>
 </head>
 <body>
   <div class="header-content">
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
-    <button class="toggle-button" id="toggleButton">+</button>
-    <!-- 액션 버튼 컨테이너 -->
-    <div class="action-buttons" id="actionButtons">
-      <button class="action-button download" id="downloadButton" title="다운로드"></button>
-      <button class="action-button copy" id="copyLinksButton" title="복사"></button>
-    </div>
+    <button class="action-style toggle-button" id="toggleButton">+</button>
+    <!-- 액션 버튼을 별도의 div 없이 직접 배치 -->
+    <button class="action-style action-button download" id="downloadButton" title="다운로드"></button>
+    <button class="action-style action-button copy" id="copyLinksButton" title="복사"></button>
   </div>
 
   <div class="upload-container" id="uploadContainer">
