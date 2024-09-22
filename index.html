@@ -6,7 +6,7 @@
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>이미지 공유</title>
   <style>
-    /* 기존 스타일 유지 */
+    /* 기본 스타일 */
     body {
       display: flex;
       flex-direction: column;
@@ -157,7 +157,7 @@
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    /* 새로운 액션 버튼 스타일 */
+    /* 액션 버튼 스타일 */
     .action-buttons {
       display: none; /* 기본적으로 숨김 */
       position: absolute;
@@ -237,7 +237,7 @@
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
     <h1>이미지 공유</h1>
     <button class="toggle-button" id="toggleButton">+</button>
-    <!-- 새로운 액션 버튼 컨테이너 -->
+    <!-- 액션 버튼 컨테이너 -->
     <div class="action-buttons" id="actionButtons">
       <button class="action-button download" id="downloadButton" title="다운로드"></button>
       <button class="action-button copy" id="copyLinksButton" title="복사"></button>
@@ -663,7 +663,7 @@
       }
     });
 
-    // 링크 복사 기능
+    // 링크 복사 기능 (텍스트 링크 복사)
     document.getElementById('copyButton').addEventListener('click', () => {
       const linkBox = document.getElementById('linkBox');
       linkBox.select();
@@ -671,7 +671,7 @@
       alert('링크가 복사되었습니다!');
     });
 
-    // 다운로드 버튼 기능
+    // 다운로드 버튼 기능 (파일 다운로드)
     downloadButton.addEventListener('click', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const imageNamesParam = urlParams.get('');
@@ -684,25 +684,53 @@
         const storageRef = ref(storage, trimmedName);
         try {
           const downloadURL = await getDownloadURL(storageRef);
+          // Fetch the Blob to ensure the download is handled correctly
+          const response = await fetch(downloadURL);
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          
           // Create a temporary link to trigger download
           const a = document.createElement('a');
-          a.href = downloadURL;
+          a.href = blobUrl;
           a.download = trimmedName;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl); // Release the blob URL
         } catch (error) {
           console.error("이미지 다운로드 실패:", error);
         }
       }
     });
 
-    // 복사 버튼 기능
-    copyLinksButton.addEventListener('click', () => {
-      const linkBox = document.getElementById('linkBox');
-      linkBox.select();
-      document.execCommand('copy');
-      alert('이미지 링크가 복사되었습니다!');
+    // 복사 버튼 기능 (이미지 자체 복사)
+    copyLinksButton.addEventListener('click', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const imageNamesParam = urlParams.get('');
+      if (!imageNamesParam) return;
+
+      const imageNames = imageNamesParam.split(',');
+
+      if (imageNames.length === 0) {
+        alert('복사할 이미지가 없습니다.');
+        return;
+      }
+
+      const imageName = imageNames[0].trim(); // 첫 번째 이미지만 복사
+      const storageRef = ref(storage, imageName);
+      try {
+        const downloadURL = await getDownloadURL(storageRef);
+        const response = await fetch(downloadURL);
+        const blob = await response.blob();
+        
+        // Clipboard API를 사용하여 이미지 복사
+        const data = [new ClipboardItem({ [blob.type]: blob })];
+        await navigator.clipboard.write(data);
+        alert('이미지가 클립보드에 복사되었습니다!');
+      } catch (error) {
+        console.error("이미지 복사 실패:", error);
+        alert('이미지 복사에 실패했습니다.');
+      }
     });
 
     // URL에서 이미지 로드
