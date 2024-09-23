@@ -197,11 +197,28 @@
       padding: 0; /* 내부 여백 제거 */
     }
 
-    /* 컨텍스트 메뉴 버튼 스타일 수정 */
+    /* 사용자 정의 컨텍스트 메뉴 스타일 수정 */
+    .custom-context-menu {
+      color: #000; /* 텍스트 색상을 검정으로 설정 */
+      position: absolute;
+      background-color: #ffffff;
+      z-index: 1000;
+      width: 150px;
+      display: none; /* 기본적으로 숨김 */
+      flex-direction: column;
+      border-radius: 8px; /* 컨텍스트 메뉴의 모서리를 둥글게 설정 */
+      box-shadow: none; /* 그림자 제거 */
+      padding: 0; /* 내부 여백 제거 */
+      
+      /* 추가된 스타일 */
+      overflow: hidden; /* 메뉴 내에서 넘치는 부분 숨김 */
+      box-sizing: border-box; /* 패딩과 보더를 포함한 크기 계산 */
+    }
+
     .custom-context-menu button {
       background-color: #cfcfcf;
-      text-align: center;
-      width: 80%;
+      text-align: left;
+      width: 100%;
       cursor: pointer;
       font-size: 14px; /* 글자 크기 유지 */
       padding: 6px 10px; /* 버튼 세로 길이 조정 */
@@ -209,6 +226,9 @@
       border: none; /* 기본 테두리 제거 */
       border-radius: 0; /* 모서리 둥글지 않게 설정 */
       box-shadow: none; /* 그림자 제거 */
+      
+      /* 추가된 스타일 */
+      box-sizing: border-box; /* 패딩과 보더를 포함한 크기 계산 */
       
       /* Transition 재정의: transform을 제외하고 background-color와 box-shadow만 포함 */
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
