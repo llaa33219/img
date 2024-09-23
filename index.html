@@ -839,8 +839,23 @@
       if (!imgElement) return;
 
       try {
-        const blob = await fetch(imgElement.src).then(r => r.blob());
-        const data = [new ClipboardItem({ [blob.type]: blob })];
+        // Canvas를 생성하여 이미지를 그립니다.
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElement.naturalWidth;
+        canvas.height = imgElement.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElement, 0, 0);
+
+        // PNG 형식의 Blob을 생성합니다.
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Canvas 변환 실패'));
+          }, 'image/png');
+        });
+
+        // ClipboardItem을 생성할 때 'image/png' 형식을 사용합니다.
+        const data = [new ClipboardItem({ 'image/png': blob })];
         await navigator.clipboard.write(data);
         alert('이미지가 복사되었습니다!');
       } catch (error) {
