@@ -183,19 +183,21 @@
       pointer-events: none;
     }
   
-    /* 수정된 사용자 정의 컨텍스트 메뉴 스타일 */
+    /* 사용자 정의 컨텍스트 메뉴 스타일 수정 */
     .custom-context-menu {
       color: #000; /* 텍스트 색상을 검정으로 설정 */
       position: absolute;
       background-color: #ffffff;
       z-index: 1000;
       width: 150px;
-      display: none;
+      display: none; /* 기본적으로 숨김 */
       flex-direction: column;
       border-radius: 8px; /* 컨텍스트 메뉴의 모서리를 둥글게 설정 */
       box-shadow: none; /* 그림자 제거 */
+      padding: 0; /* 내부 여백 제거 */
     }
-  
+
+    /* 컨텍스트 메뉴 버튼 스타일 수정 */
     .custom-context-menu button {
       background-color: #cfcfcf;
       text-align: left;
@@ -207,11 +209,19 @@
       border: none; /* 기본 테두리 제거 */
       border-radius: 0; /* 모서리 둥글지 않게 설정 */
       box-shadow: none; /* 그림자 제거 */
+      
+      /* Transition 재정의: transform을 제외하고 background-color와 box-shadow만 포함 */
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      
+      /* 기본 transform 제거 */
+      transform: none;
     }
 
     .custom-context-menu button:hover {
       background-color: #8a8a8a;
       box-shadow: none;
+      
+      /* 호버 시 transform 제거 */
       transform: none;
     }
     /* 기존 기타 스타일 유지 */
