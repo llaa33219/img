@@ -182,6 +182,32 @@
       text-shadow: 2px 2px 4px #000;
       pointer-events: none;
     }
+
+    /* 사용자 정의 컨텍스트 메뉴 스타일 */
+    .custom-context-menu {
+      position: absolute;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+      width: 150px;
+      display: none;
+      flex-direction: column;
+    }
+
+    .custom-context-menu button {
+      background: none;
+      border: none;
+      padding: 10px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .custom-context-menu button:hover {
+      background-color: #f0f0f0;
+    }
   </style>
 </head>
 <body>
@@ -204,6 +230,12 @@
   </div>
 
   <div id="imageContainer"></div>
+
+  <!-- 사용자 정의 컨텍스트 메뉴 -->
+  <div class="custom-context-menu" id="customContextMenu">
+    <button id="copyImage">이미지 복사</button>
+    <button id="downloadImage">이미지 다운로드</button>
+  </div>
 
   <!-- Firebase SDKs -->
   <script type="module">
@@ -697,6 +729,12 @@
             imgElement.addEventListener('click', function () {
               imgElement.classList.toggle('expanded');
             });
+
+            // 사용자 정의 컨텍스트 메뉴 이벤트 추가
+            imgElement.addEventListener('contextmenu', function(event) {
+              event.preventDefault();
+              showCustomContextMenu(event, imgElement);
+            });
           }
         } else {
           // 모든 비디오는 GIF로 변환되므로 이미지로 처리
@@ -716,12 +754,80 @@
             imgElement.addEventListener('click', function () {
               imgElement.classList.toggle('expanded');
             });
+
+            // 사용자 정의 컨텍스트 메뉴 이벤트 추가
+            imgElement.addEventListener('contextmenu', function(event) {
+              event.preventDefault();
+              showCustomContextMenu(event, imgElement);
+            });
           }
         }
       } catch (error) {
         console.error("이미지 로드 실패:", error);
       }
     }
+
+    // 사용자 정의 컨텍스트 메뉴 표시 함수
+    function showCustomContextMenu(event, imgElement) {
+      const contextMenu = document.getElementById('customContextMenu');
+      contextMenu.style.top = `${event.clientY}px`;
+      contextMenu.style.left = `${event.clientX}px`;
+      contextMenu.style.display = 'flex';
+      contextMenu.style.flexDirection = 'column';
+
+      // 현재 클릭된 이미지 요소를 저장
+      contextMenu.currentImage = imgElement;
+    }
+
+    // 사용자 정의 컨텍스트 메뉴 숨김 함수
+    function hideCustomContextMenu() {
+      const contextMenu = document.getElementById('customContextMenu');
+      contextMenu.style.display = 'none';
+      contextMenu.currentImage = null;
+    }
+
+    // 문서 전체에 클릭 시 컨텍스트 메뉴 숨김 처리
+    document.addEventListener('click', (event) => {
+      const contextMenu = document.getElementById('customContextMenu');
+      if (!contextMenu.contains(event.target)) {
+        hideCustomContextMenu();
+      }
+    });
+
+    // '이미지 복사' 버튼 클릭 시 처리
+    document.getElementById('copyImage').addEventListener('click', async () => {
+      const contextMenu = document.getElementById('customContextMenu');
+      const imgElement = contextMenu.currentImage;
+      if (!imgElement) return;
+
+      try {
+        const blob = await fetch(imgElement.src).then(r => r.blob());
+        const data = [new ClipboardItem({ [blob.type]: blob })];
+        await navigator.clipboard.write(data);
+        alert('이미지가 복사되었습니다!');
+      } catch (error) {
+        console.error('이미지 복사 실패:', error);
+        alert('이미지 복사에 실패했습니다.');
+      } finally {
+        hideCustomContextMenu();
+      }
+    });
+
+    // '이미지 다운로드' 버튼 클릭 시 처리
+    document.getElementById('downloadImage').addEventListener('click', () => {
+      const contextMenu = document.getElementById('customContextMenu');
+      const imgElement = contextMenu.currentImage;
+      if (!imgElement) return;
+
+      const link = document.createElement('a');
+      link.href = imgElement.src;
+      link.download = 'image';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      hideCustomContextMenu();
+    });
 
     // 페이지 로드 시 이미지 로드
     window.onload = async () => {
