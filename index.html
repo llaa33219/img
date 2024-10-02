@@ -507,7 +507,7 @@
               console.log(textAnnotations);
 
               // 이미지가 일러스트레이션 또는 실사화 중 어떤 것인지 판단
-              let imageCategory = '실사화'; // 기본값은 실사화(실제 사진)
+              let imageCategory = '실사화'; // 기본값은 실사화
 
               if (labels && labels.length > 0) {
                 const illustrationKeywords = [
@@ -526,32 +526,36 @@
                   imageCategory = '일러스트레이션';
                   console.log('이미지가 일러스트레이션으로 판단되었습니다.');
                 } else {
-                  console.log('이미지가 실제 사진 판단되었습니다.');
+                  console.log('이미지가 실사화로 판단되었습니다.');
                 }
               }
 
-              // 검열 강도 조정: 'POSSIBLE', 'LIKELY' 이상 포함
-              const unsafeLevels = ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'];
+              // 검열 기준 세분화
+              const censorshipCriteria = {
+                adult: ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'],
+                violence: ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'],
+                racy: ['LIKELY', 'VERY_LIKELY'] // 선정적인 콘텐츠 기준 완화: 'LIKELY' 이상만 포함
+              };
 
               // 기본적으로 성인 콘텐츠, 폭력성, 선정적인 콘텐츠만 체크
               let isCensored = false;
               let reasons = []; // 검열 이유를 저장할 배열
 
-              if (unsafeLevels.includes(safeSearch.adult)) { // 성인 콘텐츠
-                isCensored = true;
-                reasons.push('성인 콘텐츠');
-              }
-              if (unsafeLevels.includes(safeSearch.violence)) { // 폭력성
-                isCensored = true;
-                reasons.push('폭력성');
-              }
-              if (unsafeLevels.includes(safeSearch.racy)) { // 선정적인 콘텐츠 추가
-                isCensored = true;
-                reasons.push('선정적인 콘텐츠');
-              }
+              // 검열 기준 함수
+              const checkCensorship = (category, value, criteria, reason) => {
+                if (criteria.includes(value)) {
+                  isCensored = true;
+                  reasons.push(reason);
+                }
+              };
+
+              // 각 SafeSearch 카테고리에 대해 검열 기준 적용
+              checkCensorship('adult', safeSearch.adult, censorshipCriteria.adult, '성인 콘텐츠');
+              checkCensorship('violence', safeSearch.violence, censorshipCriteria.violence, '폭력성');
+              checkCensorship('racy', safeSearch.racy, censorshipCriteria.racy, '선정적인 콘텐츠');
 
               // 이미지 카테고리에 따라 추가 검열 기준 적용
-              if (imageCategory === '실사화') { // 실사화인 경우
+              if (imageCategory === '실사화') { // 실사화인 경우에만 얼굴 검출 및 추가 검열
                 // 얼굴 검출 추가: 얼굴이 검출되면 검열
                 if (faceDetection && faceDetection.length > 0) {
                   console.log('얼굴이 감지되어 검열합니다.');
@@ -747,105 +751,6 @@
         const skippedList = skippedFiles.map(file => `${file.reasons.join(', ')} (${file.name})`).join('; ');
         statusElement.innerText= `부적절한 내용이 감지되었습니다: ${skippedList}`;
       }
-    });
-
-    // 파일 업로드
-    uploadButton.addEventListener('click', async () => {
-      const mediaFiles = fileInput.files;
-      if (mediaFiles.length === 0) {
-        statusElement.innerText = "파일을 선택하세요.";
-        return;
-      }
-
-      const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
-      const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
-      let uploadedNames = [];
-      let skippedFiles = []; // 업로드를 건너뛴 파일 목록
-
-      for (const mediaFile of mediaFiles) {
-        const fileNameParts = mediaFile.name.split('.');
-        if (fileNameParts.length < 2) {
-          statusElement.innerText = "파일에 확장자가 없습니다.";
-          return;
-        }
-        const fileExtension = fileNameParts.pop().toLowerCase();
-        const isImage = allowedImageExtensions.includes(fileExtension);
-        const isVideo = allowedVideoExtensions.includes(fileExtension);
-
-        console.log(`Processing file: ${mediaFile.name}, Extension: ${fileExtension}, isImage: ${isImage}, isVideo: ${isVideo}`);
-
-        if (!isImage && !isVideo) {
-          statusElement.innerText = "허용되지 않은 파일 형식입니다.";
-          return;
-        }
-
-        try {
-          let uploadFile = mediaFile;
-          let censorshipReasons = []; // 검열 이유를 저장할 배열
-
-          if (isImage) {
-            const { isCensored, reasons } = await getImageSafetyScore(mediaFile);
-            if (isCensored) {
-              censorshipReasons = reasons;
-            }
-          }
-
-          if (isVideo) {
-            // 비디오를 GIF로 변환
-            uploadFile = await convertVideoToGif(mediaFile);
-            if (!uploadFile) {
-              statusElement.innerText = "GIF 변환 실패";
-              return;
-            }
-
-            // 변환된 GIF의 안전성 검사
-            const { isCensored, reasons } = await getImageSafetyScore(uploadFile);
-            if (isCensored) {
-              censorshipReasons = reasons;
-            }
-          }
-
-          if (censorshipReasons.length > 0) {
-            console.log(`검열 필요: ${mediaFile.name}`);
-            skippedFiles.push({ name: mediaFile.name, reasons: censorshipReasons }); // 파일명과 이유를 함께 저장
-            continue; // 다음 파일로 넘어감
-          }
-
-          statusElement.innerText = "업로드 중...";
-          const uniqueName = Math.random().toString(36).substring(2, 15); // 고유 이름 생성
-          console.log(`Uploading as: ${uniqueName}`);
-          const storageRef = ref(storage, uniqueName);
-          await uploadBytes(storageRef, uploadFile);
-          const downloadURL = await getDownloadURL(storageRef);
-          await setDoc(doc(db, 'images', uniqueName), { url: downloadURL, censored: false });
-          uploadedNames.push(uniqueName);
-          console.log(`Uploaded: ${uniqueName}, URL: ${downloadURL}`);
-        } catch (error) {
-          console.error("업로드 실패:", error);
-          statusElement.innerText = "업로드 실패: " + error.message;
-          return;
-        }
-      }
-
-      if (uploadedNames.length > 0) {
-        const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
-        document.getElementById('linkBox').value = imageUrl;
-        statusElement.innerText = "업로드 성공!";
-      }
-
-      if (skippedFiles.length > 0) {
-      // 각 파일의 검열 이유와 파일명을 함께 표시
-      const skippedList = skippedFiles.map(file => `${file.reasons.join(', ')} (${file.name})`).join('; ');
-      statusElement.innerText= `부적절한 내용이 감지되었습니다: ${skippedList}`;
-      }
-    });
-
-    // 링크 복사 기능
-    document.getElementById('copyButton').addEventListener('click', () => {
-      const linkBox = document.getElementById('linkBox');
-      linkBox.select();
-      document.execCommand('copy');
-      alert('링크가 복사되었습니다!');
     });
 
     // URL에서 이미지 로드
