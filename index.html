@@ -507,7 +507,7 @@
               console.log(textAnnotations);
 
               // 이미지가 일러스트레이션 또는 실사화 중 어떤 것인지 판단
-              let imageCategory = '실사화'; // 기본값은 실사화
+              let imageCategory = '실사화'; // 기본값은 실사화(실제 사진)
 
               if (labels && labels.length > 0) {
                 const illustrationKeywords = [
@@ -526,7 +526,7 @@
                   imageCategory = '일러스트레이션';
                   console.log('이미지가 일러스트레이션으로 판단되었습니다.');
                 } else {
-                  console.log('이미지가 실사화로 판단되었습니다.');
+                  console.log('이미지가 실제 사진 판단되었습니다.');
                 }
               }
 
