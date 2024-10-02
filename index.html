@@ -525,13 +525,23 @@
               const unsafeLevels = ['LIKELY', 'VERY_LIKELY'];
 
               // 기본적으로 성인 콘텐츠와 폭력성만 체크
-              let isCensored = unsafeLevels.includes(safeSearch.adult) ||  // 성인 콘텐츠
-                                unsafeLevels.includes(safeSearch.violence);   // 폭력성
+              let isCensored = false;
+              let censorshipReasons = []; // 부적절한 내용의 종류를 저장할 배열
+
+              if (unsafeLevels.includes(safeSearch.adult)) {  // 성인 콘텐츠
+                isCensored = true;
+                censorshipReasons.push('성인 콘텐츠');
+              }
+              if (unsafeLevels.includes(safeSearch.violence)) {  // 폭력성
+                isCensored = true;
+                censorshipReasons.push('폭력성');
+              }
 
               // 얼굴 검출 추가: 얼굴이 검출되면 예외적으로 검열
               if (faceDetection && faceDetection.length > 0) {
                 console.log('얼굴이 감지되어 검열합니다.');
                 isCensored = true;
+                censorshipReasons.push('얼굴 감지');
               }
 
               // 일러스트레이션이 아닌 경우에만 추가 검열 기준 적용
@@ -566,16 +576,19 @@
                 if (detectedPolitical) {
                   console.log('정치적 콘텐츠가 감지되어 검열합니다.');
                   isCensored = true;
+                  censorshipReasons.push('정치적 콘텐츠');
                 }
 
                 if (detectedDerogatory) {
                   console.log('비하적 콘텐츠가 감지되어 검열합니다.');
                   isCensored = true;
+                  censorshipReasons.push('비하적 콘텐츠');
                 }
 
                 if (detectedCruel) {
                   console.log('잔인한 콘텐츠가 감지되어 검열합니다.');
                   isCensored = true;
+                  censorshipReasons.push('잔인한 콘텐츠');
                 }
               }
 
@@ -598,6 +611,7 @@
                 if (regexEn.test(detectedText) || regexKo.test(detectedText)) {
                   console.log('욕설이 감지되어 검열합니다.');
                   isCensored = true;
+                  censorshipReasons.push('욕설');
                 }
               }
 
@@ -607,7 +621,7 @@
                 console.log('검열 통과: 적절한 콘텐츠');
               }
 
-              resolve(isCensored);
+              resolve({ isCensored, censorshipReasons }); // 변경: 객체로 반환
             } else {
               console.error("API 오류:", result);
               statusElement.innerText = "이미지 분석 중 오류가 발생했습니다.";
@@ -641,6 +655,7 @@
       const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
       let uploadedNames = [];
       let skippedFiles = []; // 업로드를 건너뛴 파일 목록
+      let skippedDetails = {}; // 건너뛴 파일의 부적절한 내용 종류를 저장
 
       for (const mediaFile of mediaFiles) {
         const fileNameParts = mediaFile.name.split('.');
@@ -661,11 +676,10 @@
 
         try {
           let uploadFile = mediaFile;
-          let needsCensorship = false; // 기본적으로 검열을 강하게 적용
+          let censorshipInfo = { isCensored: false, reasons: [] }; // 변경: 검열 정보 저장
 
           if (isImage) {
-            const isCensored = await getImageSafetyScore(mediaFile);
-            needsCensorship = isCensored;
+            censorshipInfo = await getImageSafetyScore(mediaFile);
           }
 
           if (isVideo) {
@@ -677,13 +691,13 @@
             }
 
             // 변환된 GIF의 안전성 검사
-            const isCensored = await getImageSafetyScore(uploadFile);
-            needsCensorship = isCensored;
+            censorshipInfo = await getImageSafetyScore(uploadFile);
           }
 
-          if (needsCensorship) {
+          if (censorshipInfo.isCensored) {
             console.log(`검열 필요: ${mediaFile.name}`);
             skippedFiles.push(mediaFile.name); // 건너뛴 파일 목록에 추가
+            skippedDetails[mediaFile.name] = censorshipInfo.reasons; // 부적절한 내용 종류 저장
             continue; // 다음 파일로 넘어감
           }
 
@@ -693,7 +707,7 @@
           const storageRef = ref(storage, uniqueName);
           await uploadBytes(storageRef, uploadFile);
           const downloadURL = await getDownloadURL(storageRef);
-          await setDoc(doc(db, 'images', uniqueName), { url: downloadURL, censored: needsCensorship });
+          await setDoc(doc(db, 'images', uniqueName), { url: downloadURL, censored: censorshipInfo.isCensored });
           uploadedNames.push(uniqueName);
           console.log(`Uploaded: ${uniqueName}, URL: ${downloadURL}`);
         } catch (error) {
@@ -710,8 +724,13 @@
       }
 
       if (skippedFiles.length > 0) {
-        const skippedList = skippedFiles.join(', ');
-        statusElement.innerText = "부적절한 이미지가 감지되었습니다.";
+        // 변경: 부적절한 내용의 종류를 포함하여 메시지 표시
+        let message = "부적절한 내용이 감지되었습니다: ";
+        const details = skippedFiles.map(fileName => {
+          const reasons = skippedDetails[fileName];
+          return `${fileName} (${reasons.join(', ')})`;
+        }).join('; ');
+        statusElement.innerText = message + details;
       }
     });
 
