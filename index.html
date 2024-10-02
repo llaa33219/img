@@ -506,35 +506,25 @@
               console.log(labels);
               console.log(textAnnotations);
 
-              // 이미지가 일러스트레이션, 반실사화, 실사화 중 어떤 것인지 판단
+              // 이미지가 일러스트레이션인지 실사화인지 판단
               let imageCategory = '실사화'; // 기본값은 실사화
 
               if (labels && labels.length > 0) {
                 const illustrationKeywords = [
                   'cartoon', 'illustration', 'drawing', 'comic', 'sketch', 'graphic',
                   'anime', 'manga', 'vector', 'digital art', 'paint', 'design', 'artwork',
-                  'character design', 'concept art', 'line art', 'storyboard'
-                ]; // 일러스트레이션 키워드
-
-                const semiRealisticKeywords = [
+                  'character design', 'concept art', 'line art', 'storyboard',
                   'semi-realistic', 'realistic illustration', 'digital painting', 'photorealistic',
                   '3D render', 'hyper-realistic', 'mixed media', 'semi-abstract'
-                ]; // 반실사화 키워드
+                ]; // 일러스트레이션 및 반실사화 키워드 통합
 
                 const isIllustration = labels.some(label => 
                   illustrationKeywords.some(keyword => label.description.toLowerCase().includes(keyword))
                 );
 
-                const isSemiRealistic = labels.some(label => 
-                  semiRealisticKeywords.some(keyword => label.description.toLowerCase().includes(keyword))
-                );
-
                 if (isIllustration) {
                   imageCategory = '일러스트레이션';
                   console.log('이미지가 일러스트레이션으로 판단되었습니다.');
-                } else if (isSemiRealistic) {
-                  imageCategory = '반실사화';
-                  console.log('이미지가 반실사화로 판단되었습니다.');
                 } else {
                   console.log('이미지가 실사화로 판단되었습니다.');
                 }
@@ -561,7 +551,7 @@
               }
 
               // 이미지 카테고리에 따라 추가 검열 기준 적용
-              if (imageCategory !== '일러스트레이션') { // 일러스트레이션이 아닌 경우
+              if (imageCategory !== '일러스트레이션') { // 일러스트레이션이 아닌 경우 (실사화)
                 // 얼굴 검출 추가: 얼굴이 검출되면 검열
                 if (faceDetection && faceDetection.length > 0) {
                   console.log('얼굴이 감지되어 검열합니다.');
