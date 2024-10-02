@@ -84,15 +84,11 @@
       align-items: center;
     }
   
-    #imageContainer {
-      position: relative; /* 검열 마스크를 오버레이하기 위해 position을 relative로 설정 */
+    #imageContainer img {
       width: 40vw;
-      max-width: 800px;
-    }
-  
-    #imageContainer canvas {
-      width: 100%;
       height: auto;
+      max-width: 40vw;
+      max-height: 50vh;
       display: block;
       margin: 20px auto;
       cursor: zoom-in;
@@ -100,7 +96,7 @@
       object-fit: contain;
     }
   
-    #imageContainer canvas.expanded {
+    #imageContainer img.expanded {
       width: 80vw;
       height: auto;
       max-height: 100vh;
@@ -157,6 +153,50 @@
       }
     }
   
+    /* 수정된 검열된 이미지 스타일 */
+    .censored {
+      position: relative;
+      display: inline-block;
+      /* 이미지 자체는 숨기고 오버레이로만 표시 */
+      width: 100%;
+      height: 100%;
+    }
+  
+    .censored img {
+      display: none; /* 이미지는 숨김 */
+    }
+  
+    .censored .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8); /* 검열 배경 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px #000;
+      pointer-events: none;
+    }
+  
+    /* 사용자 정의 컨텍스트 메뉴 스타일 수정 */
+    .custom-context-menu {
+      color: #000; /* 텍스트 색상을 검정으로 설정 */
+      position: absolute;
+      background-color: #ffffff;
+      z-index: 1000;
+      width: 150px;
+      display: none; /* 기본적으로 숨김 */
+      flex-direction: column;
+      border-radius: 8px; /* 컨텍스트 메뉴의 모서리를 둥글게 설정 */
+      box-shadow: none; /* 그림자 제거 */
+      padding: 0; /* 내부 여백 제거 */
+    }
+
     /* 사용자 정의 컨텍스트 메뉴 스타일 수정 */
     .custom-context-menu {
       color: #000; /* 텍스트 색상을 검정으로 설정 */
@@ -204,16 +244,6 @@
       
       /* 호버 시 transform 제거 */
       transform: none;
-    }
-
-    /* Canvas를 확대할 때의 스타일 */
-    canvas.expanded {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 100;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     /* 기존 기타 스타일 유지 */
   </style>  
@@ -288,9 +318,6 @@
 
     // Google Cloud Vision API 키 설정
     const apiKey = 'AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE'; // 여기에 당신의 Cloud Vision API 키를 입력하세요.
-
-    // 욕설 단어 리스트 (필요에 따라 추가/수정 가능)
-    const profanityWords = ['욕설1', '욕설2', '욕설3']; // 예: ['badword1', 'badword2']
 
     // 파일 선택 버튼 클릭 시 파일 입력 열기
     fileSelectButton.addEventListener('click', () => {
@@ -425,7 +452,7 @@
       return new Blob([u8arr], { type: mime });
     }
 
-    // 이미지 안전성 검사 및 텍스트 검출 함수 (Google Cloud Vision API 사용)
+    // 이미지 안전성 검사 점수 반환 함수 (Google Cloud Vision API 사용)
     async function getImageSafetyScore(imageFile) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -456,9 +483,6 @@
                       {
                         type: "LABEL_DETECTION",
                         maxResults: 15 // 필요한 경우 결과 수 조정
-                      },
-                      {
-                        type: "TEXT_DETECTION" // 텍스트 검출 추가
                       }
                     ]
                   }
@@ -472,12 +496,10 @@
               const safeSearch = result.responses[0].safeSearchAnnotation;
               const faceDetection = result.responses[0].faceAnnotations;
               const labels = result.responses[0].labelAnnotations;
-              const textAnnotations = result.responses[0].textAnnotations;
 
               console.log(safeSearch);
               console.log(faceDetection);
               console.log(labels);
-              console.log(textAnnotations);
 
               // 이미지가 일러스트레이션인지 사진인지 판단
               let isIllustration = false;
@@ -541,48 +563,13 @@
                 }
               }
 
-              // 텍스트 검출 및 욕설 단어 필터링
-              let profanityRegions = ['tlqkf', '시발', 'ㅈㄴ', '존나', '개새끼', 'fuck', 'wtf', '병신', '좆까', 'ㅈ까']; // 검열할 텍스트 영역
-              if (textAnnotations && textAnnotations.length > 1) { // 첫 번째 항목은 전체 텍스트
-                const detectedTexts = textAnnotations.slice(1); // 실제 텍스트만 추출
-                detectedTexts.forEach(textItem => {
-                  const detectedText = textItem.description;
-                  profanityWords.forEach(profanity => {
-                    if (detectedText.toLowerCase().includes(profanity.toLowerCase())) {
-                      // 욕설 단어가 포함된 경우
-                      const boundingPoly = textItem.boundingPoly;
-                      if (boundingPoly && boundingPoly.vertices) {
-                        const vertices = boundingPoly.vertices;
-                        // 바운딩 박스 좌표 추출
-                        const xCoords = vertices.map(v => v.x || 0);
-                        const yCoords = vertices.map(v => v.y || 0);
-                        const minX = Math.min(...xCoords);
-                        const minY = Math.min(...yCoords);
-                        const maxX = Math.max(...xCoords);
-                        const maxY = Math.max(...yCoords);
-                        profanityRegions.push({ minX, minY, maxX, maxY });
-                      }
-                    }
-                  });
-                });
+              if (isCensored) {
+                console.log('검열 필요: 부적절한 콘텐츠 감지');
+              } else {
+                console.log('검열 통과: 적절한 콘텐츠');
               }
 
-              // 검열 필요 여부 업데이트
-              if (profanityRegions.length > 0) {
-                console.log('텍스트 내 욕설 단어가 감지되었습니다.');
-                // isCensored는 전체 이미지 검열 여부
-                // profanityRegions는 부분 검열 필요 영역
-                // 전체 이미지 검열은 유지하지 않으려면 isCensored를 profanityRegions.length > 0에서 별도로 관리
-              }
-
-              // Firestore에 검열 정보 저장
-              const censorshipData = {
-                url: '', // 업로드 후 URL을 설정할 예정
-                censored: isCensored,
-                profanityRegions: profanityRegions // 욕설 단어가 있는 영역
-              };
-
-              resolve(censorshipData);
+              resolve(isCensored);
             } else {
               console.error("API 오류:", result);
               statusElement.innerText = "이미지 분석 중 오류가 발생했습니다.";
@@ -636,10 +623,11 @@
 
         try {
           let uploadFile = mediaFile;
-          let censorshipData = { censored: false, profanityRegions: [] };
+          let needsCensorship = false; // 기본적으로 검열을 강하게 적용
 
           if (isImage) {
-            censorshipData = await getImageSafetyScore(mediaFile);
+            const isCensored = await getImageSafetyScore(mediaFile);
+            needsCensorship = isCensored;
           }
 
           if (isVideo) {
@@ -651,12 +639,11 @@
             }
 
             // 변환된 GIF의 안전성 검사
-            censorshipData = await getImageSafetyScore(uploadFile);
+            const isCensored = await getImageSafetyScore(uploadFile);
+            needsCensorship = isCensored;
           }
 
-          // 검열 처리
-          if (censorshipData.censored && censorshipData.profanityRegions.length === 0) {
-            // 전체 이미지가 검열 대상인 경우
+          if (needsCensorship) {
             console.log(`검열 필요: ${mediaFile.name}`);
             skippedFiles.push(mediaFile.name); // 건너뛴 파일 목록에 추가
             continue; // 다음 파일로 넘어감
@@ -668,10 +655,7 @@
           const storageRef = ref(storage, uniqueName);
           await uploadBytes(storageRef, uploadFile);
           const downloadURL = await getDownloadURL(storageRef);
-          
-          // Firestore 문서 업데이트
-          censorshipData.url = downloadURL;
-          await setDoc(doc(db, 'images', uniqueName), censorshipData);
+          await setDoc(doc(db, 'images', uniqueName), { url: downloadURL, censored: needsCensorship });
           uploadedNames.push(uniqueName);
           console.log(`Uploaded: ${uniqueName}, URL: ${downloadURL}`);
         } catch (error) {
@@ -756,11 +740,9 @@
         const docRef = doc(db, 'images', name);
         const docSnap = await getDoc(docRef);
         let needsCensorship = false;
-        let profanityRegions = [];
 
         if (docSnap.exists()) {
           needsCensorship = docSnap.data().censored;
-          profanityRegions = docSnap.data().profanityRegions || [];
         }
 
         const imageContainer = document.getElementById('imageContainer');
@@ -769,122 +751,54 @@
         const isImage = imageExtensions.includes(fileExtension);
 
         if (isImage) {
-          const img = new Image();
-          img.src = URL.createObjectURL(blob);
-          img.onload = () => {
-            // Canvas 생성
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+          if (needsCensorship) {
+            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
+            const censorshipMessage = document.createElement('div');
+            censorshipMessage.classList.add('censorship-message');
+            censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
 
-            // 욕설이 포함된 영역에 블러 또는 모자이크 처리
-            if (needsCensorship && profanityRegions.length > 0) {
-              profanityRegions.forEach(region => {
-                const { minX, minY, maxX, maxY } = region;
-                const width = maxX - minX;
-                const height = maxY - minY;
+            imageContainer.appendChild(censorshipMessage);
+          } else {
+            const imgElement = document.createElement('img');
+            imgElement.src = URL.createObjectURL(blob);
+            imageContainer.appendChild(imgElement);
 
-                // 블러 처리 (CSS 필터처럼)
-                ctx.filter = 'blur(8px)';
-                ctx.drawImage(
-                  img,
-                  minX, minY, width, height,
-                  minX, minY, width, height
-                );
-                ctx.filter = 'none';
-
-                // 또는 모자이크 처리 예시:
-                /*
-                const scale = 0.05; // 축소 비율
-                const smallWidth = Math.ceil(width * scale);
-                const smallHeight = Math.ceil(height * scale);
-                // 축소
-                const tmpCanvas = document.createElement('canvas');
-                tmpCanvas.width = smallWidth;
-                tmpCanvas.height = smallHeight;
-                const tmpCtx = tmpCanvas.getContext('2d');
-                tmpCtx.drawImage(img, minX, minY, width, height, 0, 0, smallWidth, smallHeight);
-                // 확대하여 모자이크 효과
-                ctx.drawImage(tmpCanvas, minX, minY, width, height);
-                */
-              });
-            }
-
-            // Canvas를 이미지로 변환하여 표시
-            canvas.classList.add('media-canvas');
-            canvas.addEventListener('click', function () {
-              canvas.classList.toggle('expanded');
+            // 확대 기능
+            imgElement.addEventListener('click', function () {
+              imgElement.classList.toggle('expanded');
             });
 
             // 사용자 정의 컨텍스트 메뉴 이벤트 추가
-            canvas.addEventListener('contextmenu', function(event) {
+            imgElement.addEventListener('contextmenu', function(event) {
               event.preventDefault();
-              showCustomContextMenu(event, canvas);
+              showCustomContextMenu(event, imgElement);
             });
-
-            imageContainer.appendChild(canvas);
-          };
+          }
         } else {
           // 모든 비디오는 GIF로 변환되므로 이미지로 처리
-          const img = new Image();
-          img.src = URL.createObjectURL(blob);
-          img.onload = () => {
-            // Canvas 생성
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+          if (needsCensorship) {
+            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
+            const censorshipMessage = document.createElement('div');
+            censorshipMessage.classList.add('censorship-message');
+            censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
 
-            // 욕설이 포함된 영역에 블러 또는 모자이크 처리
-            if (needsCensorship && profanityRegions.length > 0) {
-              profanityRegions.forEach(region => {
-                const { minX, minY, maxX, maxY } = region;
-                const width = maxX - minX;
-                const height = maxY - minY;
+            imageContainer.appendChild(censorshipMessage);
+          } else {
+            const imgElement = document.createElement('img');
+            imgElement.src = URL.createObjectURL(blob);
+            imageContainer.appendChild(imgElement);
 
-                // 블러 처리
-                ctx.filter = 'blur(8px)';
-                ctx.drawImage(
-                  img,
-                  minX, minY, width, height,
-                  minX, minY, width, height
-                );
-                ctx.filter = 'none';
-
-                // 또는 모자이크 처리 예시:
-                /*
-                const scale = 0.05; // 축소 비율
-                const smallWidth = Math.ceil(width * scale);
-                const smallHeight = Math.ceil(height * scale);
-                // 축소
-                const tmpCanvas = document.createElement('canvas');
-                tmpCanvas.width = smallWidth;
-                tmpCanvas.height = smallHeight;
-                const tmpCtx = tmpCanvas.getContext('2d');
-                tmpCtx.drawImage(img, minX, minY, width, height, 0, 0, smallWidth, smallHeight);
-                // 확대하여 모자이크 효과
-                ctx.drawImage(tmpCanvas, minX, minY, width, height);
-                */
-              });
-            }
-
-            // Canvas를 이미지로 변환하여 표시
-            canvas.classList.add('media-canvas');
-            canvas.addEventListener('click', function () {
-              canvas.classList.toggle('expanded');
+            // 확대 기능
+            imgElement.addEventListener('click', function () {
+              imgElement.classList.toggle('expanded');
             });
 
             // 사용자 정의 컨텍스트 메뉴 이벤트 추가
-            canvas.addEventListener('contextmenu', function(event) {
+            imgElement.addEventListener('contextmenu', function(event) {
               event.preventDefault();
-              showCustomContextMenu(event, canvas);
+              showCustomContextMenu(event, imgElement);
             });
-
-            imageContainer.appendChild(canvas);
-          };
+          }
         }
       } catch (error) {
         console.error("이미지 로드 실패:", error);
@@ -892,22 +806,22 @@
     }
 
     // 사용자 정의 컨텍스트 메뉴 표시 함수
-    function showCustomContextMenu(event, canvasElement) {
+    function showCustomContextMenu(event, imgElement) {
       const contextMenu = document.getElementById('customContextMenu');
       contextMenu.style.top = `${event.clientY}px`;
       contextMenu.style.left = `${event.clientX}px`;
       contextMenu.style.display = 'flex';
       contextMenu.style.flexDirection = 'column';
 
-      // 현재 클릭된 캔버스 요소를 저장
-      contextMenu.currentCanvas = canvasElement;
+      // 현재 클릭된 이미지 요소를 저장
+      contextMenu.currentImage = imgElement;
     }
 
     // 사용자 정의 컨텍스트 메뉴 숨김 함수
     function hideCustomContextMenu() {
       const contextMenu = document.getElementById('customContextMenu');
       contextMenu.style.display = 'none';
-      contextMenu.currentCanvas = null;
+      contextMenu.currentImage = null;
     }
 
     // 문서 전체에 클릭 시 컨텍스트 메뉴 숨김 처리
@@ -921,19 +835,29 @@
     // '이미지 복사' 버튼 클릭 시 처리
     document.getElementById('copyImage').addEventListener('click', async () => {
       const contextMenu = document.getElementById('customContextMenu');
-      const canvasElement = contextMenu.currentCanvas;
-      if (!canvasElement) return;
+      const imgElement = contextMenu.currentImage;
+      if (!imgElement) return;
 
       try {
-        canvasElement.toBlob(async (blob) => {
-          if (blob) {
-            const data = [new ClipboardItem({ 'image/png': blob })];
-            await navigator.clipboard.write(data);
-            alert('이미지가 복사되었습니다!');
-          } else {
-            throw new Error('Canvas 변환 실패');
-          }
-        }, 'image/png');
+        // Canvas를 생성하여 이미지를 그립니다.
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElement.naturalWidth;
+        canvas.height = imgElement.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElement, 0, 0);
+
+        // PNG 형식의 Blob을 생성합니다.
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Canvas 변환 실패'));
+          }, 'image/png');
+        });
+
+        // ClipboardItem을 생성할 때 'image/png' 형식을 사용합니다.
+        const data = [new ClipboardItem({ 'image/png': blob })];
+        await navigator.clipboard.write(data);
+        alert('이미지가 복사되었습니다!');
       } catch (error) {
         console.error('이미지 복사 실패:', error);
         alert('이미지 복사에 실패했습니다.');
@@ -945,21 +869,15 @@
     // '이미지 다운로드' 버튼 클릭 시 처리
     document.getElementById('downloadImage').addEventListener('click', () => {
       const contextMenu = document.getElementById('customContextMenu');
-      const canvasElement = contextMenu.currentCanvas;
-      if (!canvasElement) return;
+      const imgElement = contextMenu.currentImage;
+      if (!imgElement) return;
 
-      canvasElement.toBlob((blob) => {
-        if (blob) {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'image.png';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          alert('이미지 다운로드에 실패했습니다.');
-        }
-      }, 'image/png');
+      const link = document.createElement('a');
+      link.href = imgElement.src;
+      link.download = 'image';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       hideCustomContextMenu();
     });
