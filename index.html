@@ -516,7 +516,7 @@
                   'character design', 'concept art', 'line art', 'storyboard',
                   'semi-realistic', 'realistic illustration', 'digital painting', 'photorealistic',
                   '3D render', 'hyper-realistic', 'mixed media', 'semi-abstract'
-                ]; // 일러스트레이션 및 반실사화 키워드 확장
+                ]; // 일러스트레이션 및 실사화 키워드 확장
 
                 const isIllustration = labels.some(label => 
                   illustrationKeywords.some(keyword => label.description.toLowerCase().includes(keyword))
@@ -533,7 +533,7 @@
               // 검열 강도 조정: 'POSSIBLE', 'LIKELY' 이상 포함
               const unsafeLevels = ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'];
 
-              // 기본적으로 성인 콘텐츠와 폭력성만 체크
+              // 기본적으로 성인 콘텐츠, 폭력성, 선정적인 콘텐츠만 체크
               let isCensored = false;
               let reasons = []; // 검열 이유를 저장할 배열
 
@@ -551,7 +551,7 @@
               }
 
               // 이미지 카테고리에 따라 추가 검열 기준 적용
-              if (imageCategory !== '일러스트레이션') { // 일러스트레이션이 아닌 경우 (실사화)
+              if (imageCategory === '실사화') { // 실사화인 경우
                 // 얼굴 검출 추가: 얼굴이 검출되면 검열
                 if (faceDetection && faceDetection.length > 0) {
                   console.log('얼굴이 감지되어 검열합니다.');
