@@ -728,9 +728,9 @@
       }
 
       if (skippedFiles.length > 0) {
-        // 각 파일의 검열 이유를 모아서 하나의 문자열로 만듦
-        const skippedList = skippedFiles.map(file => `${file.name}: ${file.reasons.join(', ')}`).join('; ');
-        statusElement.innerText = `부적절한 내용이 감지되었습니다: ${skippedList}`;
+      // 각 파일의 검열 이유와 파일명을 함께 표시
+      const skippedList = skippedFiles.map(file => `${file.reasons.join(', ')} (${file.name})`).join('; ');
+      statusElement.innerText= `부적절한 내용이 감지되었습니다: ${skippedList}`;
       }
     });
 
