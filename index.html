@@ -506,7 +506,7 @@
               console.log(labels);
               console.log(textAnnotations);
 
-              // 이미지가 일러스트레이션인지 실사화인지 판단
+              // 이미지가 일러스트레이션 또는 실사화 중 어떤 것인지 판단
               let imageCategory = '실사화'; // 기본값은 실사화
 
               if (labels && labels.length > 0) {
@@ -516,7 +516,7 @@
                   'character design', 'concept art', 'line art', 'storyboard',
                   'semi-realistic', 'realistic illustration', 'digital painting', 'photorealistic',
                   '3D render', 'hyper-realistic', 'mixed media', 'semi-abstract'
-                ]; // 일러스트레이션 및 반실사화 키워드 통합
+                ]; // 일러스트레이션 및 반실사화 키워드 확장
 
                 const isIllustration = labels.some(label => 
                   illustrationKeywords.some(keyword => label.description.toLowerCase().includes(keyword))
@@ -657,97 +657,6 @@
         reader.readAsDataURL(imageFile);
       });
     }
-
-    // 파일 업로드
-    uploadButton.addEventListener('click', async () => {
-      const mediaFiles = fileInput.files;
-      if (mediaFiles.length === 0) {
-        statusElement.innerText = "파일을 선택하세요.";
-        return;
-      }
-
-      const allowedImageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
-      const allowedVideoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
-      let uploadedNames = [];
-      let skippedFiles = []; // 업로드를 건너뛴 파일 목록
-
-      for (const mediaFile of mediaFiles) {
-        const fileNameParts = mediaFile.name.split('.');
-        if (fileNameParts.length < 2) {
-          statusElement.innerText = "파일에 확장자가 없습니다.";
-          return;
-        }
-        const fileExtension = fileNameParts.pop().toLowerCase();
-        const isImage = allowedImageExtensions.includes(fileExtension);
-        const isVideo = allowedVideoExtensions.includes(fileExtension);
-
-        console.log(`Processing file: ${mediaFile.name}, Extension: ${fileExtension}, isImage: ${isImage}, isVideo: ${isVideo}`);
-
-        if (!isImage && !isVideo) {
-          statusElement.innerText = "허용되지 않은 파일 형식입니다.";
-          return;
-        }
-
-        try {
-          let uploadFile = mediaFile;
-          let censorshipReasons = []; // 검열 이유를 저장할 배열
-
-          if (isImage) {
-            const { isCensored, reasons } = await getImageSafetyScore(mediaFile);
-            if (isCensored) {
-              censorshipReasons = reasons;
-            }
-          }
-
-          if (isVideo) {
-            // 비디오를 GIF로 변환
-            uploadFile = await convertVideoToGif(mediaFile);
-            if (!uploadFile) {
-              statusElement.innerText = "GIF 변환 실패";
-              return;
-            }
-
-            // 변환된 GIF의 안전성 검사
-            const { isCensored, reasons } = await getImageSafetyScore(uploadFile);
-            if (isCensored) {
-              censorshipReasons = reasons;
-            }
-          }
-
-          if (censorshipReasons.length > 0) {
-            console.log(`검열 필요: ${mediaFile.name}`);
-            skippedFiles.push({ name: mediaFile.name, reasons: censorshipReasons }); // 파일명과 이유를 함께 저장
-            continue; // 다음 파일로 넘어감
-          }
-
-          statusElement.innerText = "업로드 중...";
-          const uniqueName = Math.random().toString(36).substring(2, 15); // 고유 이름 생성
-          console.log(`Uploading as: ${uniqueName}`);
-          const storageRef = ref(storage, uniqueName);
-          await uploadBytes(storageRef, uploadFile);
-          const downloadURL = await getDownloadURL(storageRef);
-          await setDoc(doc(db, 'images', uniqueName), { url: downloadURL, censored: false });
-          uploadedNames.push(uniqueName);
-          console.log(`Uploaded: ${uniqueName}, URL: ${downloadURL}`);
-        } catch (error) {
-          console.error("업로드 실패:", error);
-          statusElement.innerText = "업로드 실패: " + error.message;
-          return;
-        }
-      }
-
-      if (uploadedNames.length > 0) {
-        const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
-        document.getElementById('linkBox').value = imageUrl;
-        statusElement.innerText = "업로드 성공!";
-      }
-
-      if (skippedFiles.length > 0) {
-        // 각 파일의 검열 이유와 파일명을 함께 표시
-        const skippedList = skippedFiles.map(file => `${file.reasons.join(', ')} (${file.name})`).join('; ');
-        statusElement.innerText= `부적절한 내용이 감지되었습니다: ${skippedList}`;
-      }
-    });
 
     // 파일 업로드
     uploadButton.addEventListener('click', async () => {
