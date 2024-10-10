@@ -798,6 +798,39 @@
       }
     });
 
+    // '복사' 버튼 클릭 시 처리
+    document.getElementById('copyButton').addEventListener('click', () => {
+      const linkBox = document.getElementById('linkBox');
+      const linkText = linkBox.value;
+
+      if (!navigator.clipboard) {
+        // Clipboard API를 지원하지 않는 경우 대체 방법 사용
+        linkBox.select();
+        linkBox.setSelectionRange(0, 99999); // 모바일 호환성
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            alert('링크가 복사되었습니다!');
+          } else {
+            alert('링크 복사에 실패했습니다.');
+          }
+        } catch (err) {
+          console.error('복사 실패:', err);
+          alert('링크 복사에 실패했습니다.');
+        }
+      } else {
+        // Clipboard API를 사용하는 경우
+        navigator.clipboard.writeText(linkText)
+          .then(() => {
+            alert('링크가 복사되었습니다!');
+          })
+          .catch((err) => {
+            console.error('복사 실패:', err);
+            alert('링크 복사에 실패했습니다.');
+          });
+      }
+    }); 
+    
     // 미디어 표시 함수 (이미지 또는 GIF)
     async function displayMedia(name, url) {
       try {
