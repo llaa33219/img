@@ -765,15 +765,19 @@
         const imageContainer = document.getElementById('imageContainer');
         imageContainer.innerHTML = '';
 
-        for (const imageName of imageNames) {
-          const trimmedName = imageName.trim();
-          const storageRef = ref(storage, trimmedName);
-          try {
-            const downloadURL = await getDownloadURL(storageRef);
-            await displayMedia(trimmedName, downloadURL);
-          } catch (error) {
-            console.error("이미지 로드 실패:", error);
-          }
+        try {
+          // 모든 다운로드 URL을 병렬로 가져오기
+          const downloadURLs = await Promise.all(imageNames.map(name => {
+            const trimmedName = name.trim();
+            const storageRef = ref(storage, trimmedName);
+            return getDownloadURL(storageRef);
+          }));
+
+          // 모든 이미지 표시를 병렬로 처리
+          await Promise.all(downloadURLs.map((url, index) => displayMedia(imageNames[index], url)));
+        } catch (error) {
+          console.error("이미지 로드 실패:", error);
+          statusElement.innerText = "이미지 로드 중 오류가 발생했습니다.";
         }
 
         // 업로드 UI 숨김 처리
@@ -834,9 +838,6 @@
     // 미디어 표시 함수 (이미지 또는 GIF)
     async function displayMedia(name, url) {
       try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-
         // 이미지의 검열 여부 조회
         const docRef = doc(db, 'images', name);
         const docSnap = await getDoc(docRef);
@@ -853,15 +854,14 @@
 
         if (isImage) {
           if (needsCensorship) {
-            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
+            // 검열 적용: 이미지 대신 메시지 표시
             const censorshipMessage = document.createElement('div');
             censorshipMessage.classList.add('censorship-message');
             censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
-
             imageContainer.appendChild(censorshipMessage);
           } else {
             const imgElement = document.createElement('img');
-            imgElement.src = URL.createObjectURL(blob);
+            imgElement.src = url; // 직접 다운로드 URL 할당
             imageContainer.appendChild(imgElement);
 
             // 확대 기능
@@ -876,17 +876,15 @@
             });
           }
         } else {
-          // 모든 비디오는 GIF로 변환되므로 이미지로 처리
+          // GIF 처리 (비디오는 GIF로 변환되므로 이미지와 동일하게 처리)
           if (needsCensorship) {
-            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
             const censorshipMessage = document.createElement('div');
             censorshipMessage.classList.add('censorship-message');
             censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
-
             imageContainer.appendChild(censorshipMessage);
           } else {
             const imgElement = document.createElement('img');
-            imgElement.src = URL.createObjectURL(blob);
+            imgElement.src = url; // 직접 다운로드 URL 할당
             imageContainer.appendChild(imgElement);
 
             // 확대 기능
@@ -903,6 +901,7 @@
         }
       } catch (error) {
         console.error("이미지 로드 실패:", error);
+        statusElement.innerText = "이미지 로드 중 오류가 발생했습니다.";
       }
     }
 
