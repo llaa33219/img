@@ -967,19 +967,40 @@
     });
 
     // '이미지 다운로드' 버튼 클릭 시 처리
-    document.getElementById('downloadImage').addEventListener('click', () => {
+    document.getElementById('downloadImage').addEventListener('click', async () => {
       const contextMenu = document.getElementById('customContextMenu');
       const imgElement = contextMenu.currentImage;
       if (!imgElement) return;
 
-      const link = document.createElement('a');
-      link.href = imgElement.src;
-      link.download = 'image';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        // 이미지 URL에서 Blob 데이터 가져오기
+        const response = await fetch(imgElement.src, { mode: 'cors' });
+        if (!response.ok) {
+          throw new Error('이미지를 가져오는 데 실패했습니다.');
+        }
+        const blob = await response.blob();
 
-      hideCustomContextMenu();
+        // Blob URL 생성
+        const blobUrl = URL.createObjectURL(blob);
+
+        // 임시 앵커 요소 생성하여 다운로드 트리거
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        // 원본 파일 이름을 유지하려면 Firestore에 저장된 원본 파일 이름을 사용해야 합니다.
+        // 여기서는 단순히 'downloaded-image'로 설정합니다.
+        link.download = 'downloaded-image';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Blob URL 해제
+        URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error('이미지 다운로드 실패:', error);
+        alert('이미지 다운로드에 실패했습니다.');
+      } finally {
+        hideCustomContextMenu();
+      }
     });
 
     // 페이지 로드 시 이미지 로드
