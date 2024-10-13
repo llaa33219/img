@@ -861,6 +861,7 @@
             imageContainer.appendChild(censorshipMessage);
           } else {
             const imgElement = document.createElement('img');
+            imgElement.crossOrigin = 'anonymous'; // CORS 요청 허용
             imgElement.src = url; // 직접 다운로드 URL 할당
             imageContainer.appendChild(imgElement);
 
