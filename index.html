@@ -933,32 +933,54 @@
       }
     });
 
-    // '이미지 복사' 버튼 클릭 시 처리
+    // '이미지 복사' 버튼 클릭 시 처리 (CORS 프록시 사용)
     document.getElementById('copyImage').addEventListener('click', async () => {
       const contextMenu = document.getElementById('customContextMenu');
       const imgElement = contextMenu.currentImage;
       if (!imgElement) return;
 
       try {
-        // Canvas를 생성하여 이미지를 그립니다.
-        const canvas = document.createElement('canvas');
-        canvas.width = imgElement.naturalWidth;
-        canvas.height = imgElement.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(imgElement, 0, 0);
+        const imageUrl = imgElement.src;
 
-        // PNG 형식의 Blob을 생성합니다.
-        const blob = await new Promise((resolve, reject) => {
+        // AllOrigins CORS 프록시 URL
+        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(imageUrl);
+
+        // 이미지 데이터 가져오기
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('이미지를 가져오는 데 실패했습니다.');
+
+        const blob = await response.blob();
+
+        // Blob을 Image 객체로 변환
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // CORS 요청 허용
+        img.src = URL.createObjectURL(blob);
+
+        // 이미지 로드 완료까지 대기
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        // 캔버스에 이미지 그리기
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        // 캔버스를 Blob으로 변환
+        const canvasBlob = await new Promise((resolve, reject) => {
           canvas.toBlob((blob) => {
             if (blob) resolve(blob);
             else reject(new Error('Canvas 변환 실패'));
           }, 'image/png');
         });
 
-        // ClipboardItem을 생성할 때 'image/png' 형식을 사용합니다.
-        const data = [new ClipboardItem({ 'image/png': blob })];
+        // 클립보드에 이미지 복사
+        const data = [new ClipboardItem({ 'image/png': canvasBlob })];
         await navigator.clipboard.write(data);
-        alert('이미지가 복사되었습니다!');
+        alert('이미지가 클립보드에 복사되었습니다!');
       } catch (error) {
         console.error('이미지 복사 실패:', error);
         alert('이미지 복사에 실패했습니다.');
