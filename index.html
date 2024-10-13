@@ -933,7 +933,7 @@
       }
     });
 
-    // '이미지 복사' 버튼 클릭 시 처리 (CORS Anywhere 사용)
+    // '이미지 복사' 버튼 클릭 시 처리 (CORS 프록시 사용)
     document.getElementById('copyImage').addEventListener('click', async () => {
       const contextMenu = document.getElementById('customContextMenu');
       const imgElement = contextMenu.currentImage;
@@ -942,8 +942,8 @@
       try {
         const imageUrl = imgElement.src;
 
-        // CORS Anywhere 프록시 URL
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + encodeURIComponent(imageUrl);
+        // AllOrigins CORS 프록시 URL
+        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(imageUrl);
 
         // 이미지 데이터 가져오기
         const response = await fetch(proxyUrl);
