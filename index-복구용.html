@@ -84,25 +84,23 @@
       align-items: center;
     }
   
-    #imageContainer img {
+    #imageContainer img,
+    #imageContainer video {
       width: 40vw;
       height: auto;
       max-width: 40vw;
       max-height: 50vh;
       display: block;
       margin: 20px auto;
-      cursor: zoom-in;
+      cursor: pointer;
       transition: all 0.3s ease;
       object-fit: contain;
     }
   
-    #imageContainer img.expanded {
-      width: 80vw;
-      height: auto;
-      max-height: 100vh;
-      max-width: 80vw;
-      cursor: zoom-out;
-      object-fit: contain;
+    #imageContainer img.expanded,
+    /* 동영상에는 확대 기능을 적용하지 않음 */
+    #imageContainer video {
+      /* 비디오에는 확대 기능을 적용하지 않음 */
     }
   
     .container {
@@ -162,8 +160,9 @@
       height: 100%;
     }
   
-    .censored img {
-      display: none; /* 이미지는 숨김 */
+    .censored img,
+    .censored video {
+      display: none; /* 미디어 숨김 */
     }
   
     .censored .overlay {
@@ -183,20 +182,6 @@
       pointer-events: none;
     }
   
-    /* 사용자 정의 컨텍스트 메뉴 스타일 수정 */
-    .custom-context-menu {
-      color: #000; /* 텍스트 색상을 검정으로 설정 */
-      position: absolute;
-      background-color: #ffffff;
-      z-index: 1000;
-      width: 150px;
-      display: none; /* 기본적으로 숨김 */
-      flex-direction: column;
-      border-radius: 8px; /* 컨텍스트 메뉴의 모서리를 둥글게 설정 */
-      box-shadow: none; /* 그림자 제거 */
-      padding: 0; /* 내부 여백 제거 */
-    }
-
     /* 사용자 정의 컨텍스트 메뉴 스타일 수정 */
     .custom-context-menu {
       color: #000; /* 텍스트 색상을 검정으로 설정 */
@@ -247,6 +232,10 @@
     }
     /* 기존 기타 스타일 유지 */
   </style>  
+  <!-- Video.js CSS -->
+  <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+  <!-- Video.js JavaScript -->
+  <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
 </head>
 <body>
   <div class="header-content">
@@ -271,8 +260,8 @@
 
   <!-- 사용자 정의 컨텍스트 메뉴 -->
   <div class="custom-context-menu" id="customContextMenu">
-    <button id="copyImage">이미지 복사</button>
-    <button id="downloadImage">이미지 다운로드</button>
+    <button id="copyImage">복사(에러있음)</button>
+    <button id="downloadImage">다운로드</button>
   </div>
 
   <!-- Firebase SDKs -->
@@ -367,74 +356,65 @@
       }
     });
 
-    // 비디오를 GIF로 변환하는 함수
-    async function convertVideoToGif(videoFile) {
+    // 동영상 압축 함수 (WebM 형식으로)
+    async function compressVideo(videoFile) {
       return new Promise((resolve, reject) => {
-        statusElement.innerText = "비디오를 GIF로 변환 중...";
+        const video = document.createElement('video');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const stream = canvas.captureStream(30); // 30 FPS
+        const recordedChunks = [];
+        let mediaRecorder;
 
-        const fileReader = new FileReader();
-        fileReader.onload = function(event) {
-          const videoDataUrl = event.target.result;
+        video.src = URL.createObjectURL(videoFile);
+        video.crossOrigin = 'anonymous';
+        video.muted = true; // 소리 제거
+        video.load();
 
-          const videoElement = document.createElement('video');
-          videoElement.src = videoDataUrl;
+        video.addEventListener('loadedmetadata', () => {
+          // Set canvas dimensions to video dimensions
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          // 재생 속도 다시 설정 (안전 조치)
+          video.playbackRate = 1;
 
-          videoElement.addEventListener('loadedmetadata', function() {
-            const videoDuration = videoElement.duration; // 비디오 길이 (초 단위)
-            const videoWidth = videoElement.videoWidth;
-            const videoHeight = videoElement.videoHeight;
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm; codecs=vp9', // VP9 코덱 사용
+            videoBitsPerSecond: 2500000 // 비트레이트 설정 (예: 2.5 Mbps)
+          });
 
-            // 가로세로 비율 유지하며 GIF 해상도 조정 (최대 너비 설정)
-            const maxGifWidth = 480; // 원하는 최대 너비 (픽셀 단위)
-            let gifWidth = videoWidth;
-            let gifHeight = videoHeight;
-
-            if (videoWidth > maxGifWidth) {
-              const aspectRatio = videoWidth / videoHeight;
-              gifWidth = maxGifWidth;
-              gifHeight = Math.round(maxGifWidth / aspectRatio);
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              recordedChunks.push(event.data);
             }
+          };
 
-            // 비디오 길이에 맞춰 프레임 수와 프레임 지속 시간 설정
-            const frameRate = 14; // 초당 프레임 수 (fps)
-            const numFrames = Math.floor(videoDuration * frameRate);
-            const frameDuration = 1000 / frameRate; // 밀리초 단위
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            resolve(blob);
+          };
 
-            gifshot.createGIF({
-              'video': [videoDataUrl],
-              'gifWidth': gifWidth,
-              'gifHeight': gifHeight,
-              'numFrames': numFrames,
-              'frameDuration': frameDuration,
-              'progressCallback': function(captureProgress) {
-                const percent = Math.round(captureProgress * 100);
-                statusElement.innerText = `GIF 변환 중: ${percent}%`;
-              }
-            }, function(obj) {
-              if (!obj.error) {
-                const gifBlob = dataURLtoBlob(obj.image);
-                resolve(gifBlob);
-              } else {
-                console.error("GIF 변환 실패:", obj.error);
-                statusElement.innerText = "GIF 변환 실패: " + obj.error;
-                reject(obj.error);
-              }
-            });
-          });
+          mediaRecorder.start();
 
-          videoElement.addEventListener('error', function(error) {
-            console.error("비디오 메타데이터 로드 실패:", error);
-            statusElement.innerText = "비디오 메타데이터 로드 실패: " + error.message;
-            reject(error);
-          });
-        };
+          video.play();
+        });
 
-        fileReader.onerror = function(error) {
-          console.error("파일 읽기 실패:", error);
-          statusElement.innerText = "파일 읽기 실패: " + error.message;
-          reject(error);
-        };
-        fileReader.readAsDataURL(videoFile);
+        video.addEventListener('play', () => {
+          const draw = () => {
+            if (video.paused || video.ended) {
+              mediaRecorder.stop();
+              return;
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(draw);
+          };
+          draw();
+        });
+
+        video.addEventListener('error', (e) => {
+          reject(e);
+        });
       });
     }
 
@@ -662,6 +642,20 @@
       });
     }
 
+    // 사이트 소리 음소거 함수
+    function muteSiteSounds() {
+      document.querySelectorAll('audio, video').forEach(el => {
+        el.muted = true;
+      });
+    }
+
+    // 사이트 소리 복원 함수
+    function unmuteSiteSounds() {
+      document.querySelectorAll('audio, video').forEach(el => {
+        el.muted = false;
+      });
+    }
+
     // 파일 업로드
     uploadButton.addEventListener('click', async () => {
       const mediaFiles = fileInput.files;
@@ -675,85 +669,140 @@
       let uploadedNames = [];
       let skippedFiles = []; // 업로드를 건너뛴 파일 목록
 
-      for (const mediaFile of mediaFiles) {
-        const fileNameParts = mediaFile.name.split('.');
-        if (fileNameParts.length < 2) {
-          statusElement.innerText = "파일에 확장자가 없습니다.";
-          return;
-        }
-        const fileExtension = fileNameParts.pop().toLowerCase();
-        const isImage = allowedImageExtensions.includes(fileExtension);
-        const isVideo = allowedVideoExtensions.includes(fileExtension);
+      // 업로드할 파일 중 동영상 파일이 있는지 확인
+      const isAnyVideo = Array.from(mediaFiles).some(file => {
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        return allowedVideoExtensions.includes(fileExtension);
+      });
 
-        console.log(`Processing file: ${mediaFile.name}, Extension: ${fileExtension}, isImage: ${isImage}, isVideo: ${isVideo}`);
-
-        if (!isImage && !isVideo) {
-          statusElement.innerText = "허용되지 않은 파일 형식입니다.";
-          return;
-        }
-
-        try {
-          let uploadFile = mediaFile;
-          let censorshipReasons = []; // 검열 이유를 저장할 배열
-
-          if (isImage) {
-            const { isCensored, reasons } = await getImageSafetyScore(mediaFile);
-            if (isCensored) {
-              censorshipReasons = reasons;
-            }
-          }
-
-          if (isVideo) {
-            // 비디오를 GIF로 변환
-            uploadFile = await convertVideoToGif(mediaFile);
-            if (!uploadFile) {
-              statusElement.innerText = "GIF 변환 실패";
-              return;
-            }
-
-            // 변환된 GIF의 안전성 검사
-            const { isCensored, reasons } = await getImageSafetyScore(uploadFile);
-            if (isCensored) {
-              censorshipReasons = reasons;
-            }
-          }
-
-          if (censorshipReasons.length > 0) {
-            console.log(`검열 필요: ${mediaFile.name}`);
-            skippedFiles.push({ name: mediaFile.name, reasons: censorshipReasons }); // 파일명과 이유를 함께 저장
-            continue; // 다음 파일로 넘어감
-          }
-
-          statusElement.innerText = "업로드 중...";
-          const uniqueName = Math.random().toString(36).substring(2, 15); // 고유 이름 생성
-          console.log(`Uploading as: ${uniqueName}`);
-          const storageRef = ref(storage, uniqueName);
-          await uploadBytes(storageRef, uploadFile);
-          const downloadURL = await getDownloadURL(storageRef);
-          await setDoc(doc(db, 'images', uniqueName), { url: downloadURL, censored: false });
-          uploadedNames.push(uniqueName);
-          console.log(`Uploaded: ${uniqueName}, URL: ${downloadURL}`);
-        } catch (error) {
-          console.error("업로드 실패:", error);
-          statusElement.innerText = "업로드 실패: " + error.message;
-          return;
-        }
+      if (isAnyVideo) {
+        // 사이트 소리 음소거
+        muteSiteSounds();
       }
 
-      if (uploadedNames.length > 0) {
-        const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
-        document.getElementById('linkBox').value = imageUrl;
-        statusElement.innerText = "업로드 성공!";
-      }
+      try {
+        for (const mediaFile of mediaFiles) {
+          const fileNameParts = mediaFile.name.split('.');
+          if (fileNameParts.length < 2) {
+            statusElement.innerText = "파일에 확장자가 없습니다.";
+            return;
+          }
+          const fileExtension = fileNameParts.pop().toLowerCase();
+          const isImage = allowedImageExtensions.includes(fileExtension);
+          const isVideo = allowedVideoExtensions.includes(fileExtension);
 
-      if (skippedFiles.length > 0) {
-        // 각 파일의 검열 이유와 파일명을 함께 표시
-        const skippedList = skippedFiles.map(file => `${file.reasons.join(', ')} (${file.name})`).join('; ');
-        statusElement.innerText= `부적절한 내용이 감지되었습니다: ${skippedList}`;
+          console.log(`Processing file: ${mediaFile.name}, Extension: ${fileExtension}, isImage: ${isImage}, isVideo: ${isVideo}`);
+
+          if (!isImage && !isVideo) {
+            statusElement.innerText = "허용되지 않은 파일 형식입니다.";
+            return;
+          }
+
+          try {
+            let uploadFile = mediaFile;
+            let censorshipReasons = []; // 검열 이유를 저장할 배열
+
+            if (isImage) {
+              const { isCensored, reasons } = await getImageSafetyScore(mediaFile);
+              if (isCensored) {
+                censorshipReasons = reasons;
+              }
+            }
+
+            if (isVideo) {
+              // 동영상 압축
+              statusElement.innerText = "동영상 압축 중...(느릴 수 있습니다.)";
+              uploadFile = await compressVideo(mediaFile);
+              if (!uploadFile) {
+                statusElement.innerText = "동영상 압축 실패";
+                return;
+              }
+
+              // 압축된 동영상의 첫 프레임을 이미지로 추출하여 안전성 검사
+              statusElement.innerText = "동영상 첫 프레임 분석 중...";
+              const firstFrameBlob = await extractFirstFrame(uploadFile);
+              const { isCensored, reasons } = await getImageSafetyScore(firstFrameBlob);
+              if (isCensored) {
+                censorshipReasons = reasons;
+              }
+            }
+
+            if (censorshipReasons.length > 0) {
+              console.log(`검열 필요: ${mediaFile.name}`);
+              skippedFiles.push({ name: mediaFile.name, reasons: censorshipReasons }); // 파일명과 이유를 함께 저장
+              continue; // 다음 파일로 넘어감
+            }
+
+            statusElement.innerText = "업로드 중...";
+            const uniqueName = Math.random().toString(36).substring(2, 15); // 고유 이름 생성
+            console.log(`Uploading as: ${uniqueName}`);
+            const storageRef = ref(storage, uniqueName);
+            await uploadBytes(storageRef, uploadFile);
+            const downloadURL = await getDownloadURL(storageRef);
+            await setDoc(doc(db, 'images', uniqueName), { url: downloadURL, censored: false, type: isVideo ? 'video' : 'image' });
+            uploadedNames.push(uniqueName);
+            console.log(`Uploaded: ${uniqueName}, URL: ${downloadURL}`);
+          } catch (error) {
+            console.error("업로드 실패:", error);
+            statusElement.innerText = "업로드 실패: " + error.message;
+            return;
+          }
+        }
+
+        if (uploadedNames.length > 0) {
+          const imageUrl = `https://bloupla.net/img/?=${uploadedNames.join(',')}`;
+          document.getElementById('linkBox').value = imageUrl;
+          statusElement.innerText = "업로드 성공!";
+        }
+
+        if (skippedFiles.length > 0) {
+          // 각 파일의 검열 이유와 파일명을 함께 표시
+          const skippedList = skippedFiles.map(file => `${file.reasons.join(', ')} (${file.name})`).join('; ');
+          statusElement.innerText= `부적절한 내용이 감지되었습니다: ${skippedList}`;
+        }
+      } catch (error) {
+        console.error("업로드 중 오류 발생:", error);
+        statusElement.innerText = "업로드 중 오류가 발생했습니다.";
+      } finally {
+        if (isAnyVideo) {
+          // 사이트 소리 복원
+          unmuteSiteSounds();
+        }
       }
     });
 
-    // URL에서 이미지 로드
+    // 동영상 첫 프레임 추출 함수
+    async function extractFirstFrame(videoBlob) {
+      return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        video.src = URL.createObjectURL(videoBlob);
+        video.crossOrigin = 'anonymous';
+        video.load();
+
+        video.addEventListener('loadeddata', () => {
+          // 비디오의 첫 프레임으로 캔버스 설정
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(blob => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('첫 프레임 추출 실패'));
+            }
+          }, 'image/png');
+        });
+
+        video.addEventListener('error', (e) => {
+          reject(e);
+        });
+      });
+    }
+
+    // URL에서 이미지/비디오 로드
     async function loadImageFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
       const imageNamesParam = urlParams.get('');
@@ -765,15 +814,19 @@
         const imageContainer = document.getElementById('imageContainer');
         imageContainer.innerHTML = '';
 
-        for (const imageName of imageNames) {
-          const trimmedName = imageName.trim();
-          const storageRef = ref(storage, trimmedName);
-          try {
-            const downloadURL = await getDownloadURL(storageRef);
-            await displayMedia(trimmedName, downloadURL);
-          } catch (error) {
-            console.error("이미지 로드 실패:", error);
-          }
+        try {
+          // 모든 다운로드 URL을 병렬로 가져오기
+          const downloadURLs = await Promise.all(imageNames.map(name => {
+            const trimmedName = name.trim();
+            const storageRef = ref(storage, trimmedName);
+            return getDownloadURL(storageRef);
+          }));
+
+          // 모든 미디어 표시를 병렬로 처리
+          await Promise.all(downloadURLs.map((url, index) => displayMedia(imageNames[index], url)));
+        } catch (error) {
+          console.error("이미지 로드 실패:", error);
+          statusElement.innerText = "이미지 로드 중 오류가 발생했습니다.";
         }
 
         // 업로드 UI 숨김 처리
@@ -831,98 +884,99 @@
       }
     }); 
     
-    // 미디어 표시 함수 (이미지 또는 GIF)
+    // 미디어 표시 함수 (이미지 또는 동영상)
     async function displayMedia(name, url) {
       try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-
         // 이미지의 검열 여부 조회
         const docRef = doc(db, 'images', name);
         const docSnap = await getDoc(docRef);
         let needsCensorship = false;
+        let mediaType = 'image';
 
         if (docSnap.exists()) {
           needsCensorship = docSnap.data().censored;
+          mediaType = docSnap.data().type || 'image';
         }
 
         const imageContainer = document.getElementById('imageContainer');
         const fileExtension = name.split('.').pop().toLowerCase();
         const imageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
+        const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
         const isImage = imageExtensions.includes(fileExtension);
+        const isVideo = videoExtensions.includes(fileExtension) || mediaType === 'video';
 
-        if (isImage) {
+        if (isImage || isVideo) {
           if (needsCensorship) {
-            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
+            // 검열 적용: 미디어 대신 메시지 표시
             const censorshipMessage = document.createElement('div');
             censorshipMessage.classList.add('censorship-message');
             censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
-
+            censorshipMessage.style.width = '40vw';
+            censorshipMessage.style.height = 'auto';
+            censorshipMessage.style.margin = '20px auto';
+            censorshipMessage.style.textAlign = 'center';
+            censorshipMessage.style.color = '#fff';
+            censorshipMessage.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            censorshipMessage.style.padding = '20px';
+            censorshipMessage.style.borderRadius = '10px';
             imageContainer.appendChild(censorshipMessage);
           } else {
-            const imgElement = document.createElement('img');
-            imgElement.src = URL.createObjectURL(blob);
-            imageContainer.appendChild(imgElement);
+            if (isImage) {
+              const imgElement = document.createElement('img');
+              imgElement.crossOrigin = 'anonymous'; // CORS 요청 허용
+              imgElement.src = url; // 직접 다운로드 URL 할당
+              imageContainer.appendChild(imgElement);
 
-            // 확대 기능
-            imgElement.addEventListener('click', function () {
-              imgElement.classList.toggle('expanded');
-            });
+              // 확대 기능 (이미지에만 적용)
+              imgElement.addEventListener('click', function () {
+                imgElement.classList.toggle('expanded');
+              });
 
-            // 사용자 정의 컨텍스트 메뉴 이벤트 추가
-            imgElement.addEventListener('contextmenu', function(event) {
-              event.preventDefault();
-              showCustomContextMenu(event, imgElement);
-            });
-          }
-        } else {
-          // 모든 비디오는 GIF로 변환되므로 이미지로 처리
-          if (needsCensorship) {
-            // 검열 적용: 이미지 자체를 표시하지 않고 텍스트만 표시
-            const censorshipMessage = document.createElement('div');
-            censorshipMessage.classList.add('censorship-message');
-            censorshipMessage.innerText = "부적절하다고 판단되어 검열되었습니다.";
+              // 사용자 정의 컨텍스트 메뉴 이벤트 추가
+              imgElement.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
+                showCustomContextMenu(event, imgElement);
+              });
+            } else if (isVideo) {
+              const videoElement = document.createElement('video');
+              videoElement.src = url;
+              videoElement.controls = true;
+              videoElement.style.cursor = 'pointer';
+              imageContainer.appendChild(videoElement);
 
-            imageContainer.appendChild(censorshipMessage);
-          } else {
-            const imgElement = document.createElement('img');
-            imgElement.src = URL.createObjectURL(blob);
-            imageContainer.appendChild(imgElement);
+              // 동영상에는 확대 기능을 적용하지 않음
 
-            // 확대 기능
-            imgElement.addEventListener('click', function () {
-              imgElement.classList.toggle('expanded');
-            });
-
-            // 사용자 정의 컨텍스트 메뉴 이벤트 추가
-            imgElement.addEventListener('contextmenu', function(event) {
-              event.preventDefault();
-              showCustomContextMenu(event, imgElement);
-            });
+              // 사용자 정의 컨텍스트 메뉴 이벤트 추가
+              videoElement.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
+                showCustomContextMenu(event, videoElement);
+              });
+            }
           }
         }
       } catch (error) {
-        console.error("이미지 로드 실패:", error);
+        console.error("미디어 로드 실패:", error);
+        statusElement.innerText = "미디어 로드 중 오류가 발생했습니다.";
       }
     }
 
     // 사용자 정의 컨텍스트 메뉴 표시 함수
-    function showCustomContextMenu(event, imgElement) {
+    function showCustomContextMenu(event, mediaElement) {
       const contextMenu = document.getElementById('customContextMenu');
       contextMenu.style.top = `${event.clientY}px`;
       contextMenu.style.left = `${event.clientX}px`;
       contextMenu.style.display = 'flex';
       contextMenu.style.flexDirection = 'column';
 
-      // 현재 클릭된 이미지 요소를 저장
-      contextMenu.currentImage = imgElement;
+      // 현재 클릭된 미디어 요소를 저장
+      contextMenu.currentMedia = mediaElement;
     }
 
     // 사용자 정의 컨텍스트 메뉴 숨김 함수
     function hideCustomContextMenu() {
       const contextMenu = document.getElementById('customContextMenu');
       contextMenu.style.display = 'none';
-      contextMenu.currentImage = null;
+      contextMenu.currentMedia = null;
     }
 
     // 문서 전체에 클릭 시 컨텍스트 메뉴 숨김 처리
@@ -933,63 +987,123 @@
       }
     });
 
-    // '이미지 복사' 버튼 클릭 시 처리
+    // '이미지 복사' 버튼 클릭 시 처리 (CORS 프록시 사용)
     document.getElementById('copyImage').addEventListener('click', async () => {
       const contextMenu = document.getElementById('customContextMenu');
-      const imgElement = contextMenu.currentImage;
-      if (!imgElement) return;
+      const mediaElement = contextMenu.currentMedia;
+      if (!mediaElement) return;
 
       try {
-        // Canvas를 생성하여 이미지를 그립니다.
-        const canvas = document.createElement('canvas');
-        canvas.width = imgElement.naturalWidth;
-        canvas.height = imgElement.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(imgElement, 0, 0);
+        const mediaUrl = mediaElement.src;
 
-        // PNG 형식의 Blob을 생성합니다.
-        const blob = await new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error('Canvas 변환 실패'));
-          }, 'image/png');
-        });
+        // AllOrigins CORS 프록시 URL
+        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(mediaUrl);
 
-        // ClipboardItem을 생성할 때 'image/png' 형식을 사용합니다.
-        const data = [new ClipboardItem({ 'image/png': blob })];
-        await navigator.clipboard.write(data);
-        alert('이미지가 복사되었습니다!');
+        if (mediaElement.tagName.toLowerCase() === 'img') {
+          // 이미지 복사
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error('이미지를 가져오는 데 실패했습니다.');
+
+          const blob = await response.blob();
+
+          // Blob을 Image 객체로 변환
+          const img = new Image();
+          img.crossOrigin = 'anonymous'; // CORS 요청 허용
+          img.src = URL.createObjectURL(blob);
+
+          // 이미지 로드 완료까지 대기
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+
+          // 캔버스에 이미지 그리기
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          // 캔버스를 Blob으로 변환
+          const canvasBlob = await new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error('Canvas 변환 실패'));
+            }, 'image/png');
+          });
+
+          // 클립보드에 이미지 복사
+          const data = [new ClipboardItem({ 'image/png': canvasBlob })];
+          await navigator.clipboard.write(data);
+          alert('이미지가 클립보드에 복사되었습니다!');
+        } else if (mediaElement.tagName.toLowerCase() === 'video') {
+          // 동영상 복사
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error('동영상을 가져오는 데 실패했습니다.');
+
+          const blob = await response.blob();
+
+          // Blob을 비디오로 클립보드에 복사 (지원되지 않을 수 있음)
+          try {
+            const data = [new ClipboardItem({ [blob.type]: blob })];
+            await navigator.clipboard.write(data);
+            alert('동영상이 클립보드에 복사되었습니다!');
+          } catch (err) {
+            console.error('동영상 복사 실패:', err);
+            alert('동영상 복사에 실패했습니다. 브라우저가 이를 지원하지 않을 수 있습니다.');
+          }
+        }
       } catch (error) {
-        console.error('이미지 복사 실패:', error);
-        alert('이미지 복사에 실패했습니다.');
+        console.error('미디어 복사 실패:', error);
+        alert('미디어 복사에 실패했습니다.');
       } finally {
         hideCustomContextMenu();
       }
     });
 
     // '이미지 다운로드' 버튼 클릭 시 처리
-    document.getElementById('downloadImage').addEventListener('click', () => {
+    document.getElementById('downloadImage').addEventListener('click', async () => {
       const contextMenu = document.getElementById('customContextMenu');
-      const imgElement = contextMenu.currentImage;
-      if (!imgElement) return;
+      const mediaElement = contextMenu.currentMedia;
+      if (!mediaElement) return;
 
-      const link = document.createElement('a');
-      link.href = imgElement.src;
-      link.download = 'image';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        // 미디어 URL에서 Blob 데이터 가져오기
+        const response = await fetch(mediaElement.src, { mode: 'cors' });
+        if (!response.ok) {
+          throw new Error('미디어를 가져오는 데 실패했습니다.');
+        }
+        const blob = await response.blob();
 
-      hideCustomContextMenu();
+        // Blob URL 생성
+        const blobUrl = URL.createObjectURL(blob);
+
+        // 임시 앵커 요소 생성하여 다운로드 트리거
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        // 원본 파일 이름을 유지하려면 Firestore에 저장된 원본 파일 이름을 사용해야 합니다.
+        // 여기서는 단순히 'downloaded-media'로 설정합니다.
+        link.download = 'downloaded-media';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Blob URL 해제
+        URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error('미디어 다운로드 실패:', error);
+        alert('미디어 다운로드에 실패했습니다.');
+      } finally {
+        hideCustomContextMenu();
+      }
     });
 
-    // 페이지 로드 시 이미지 로드
+    // 페이지 로드 시 이미지/비디오 로드
     window.onload = async () => {
       await loadImageFromUrl();
     };
   </script>
 
-  <!-- gifshot 라이브러리 추가 (비디오를 GIF로 변환하기 위해 필요) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+  <!-- gifshot 라이브러리 제거 -->
 </body>
 </html>
