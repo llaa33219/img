@@ -95,11 +95,14 @@
       cursor: pointer;
       transition: all 0.3s ease;
       object-fit: contain;
+      cursor: zoom-in; /* 기본 상태에서는 확대 아이콘 */
     }
   
     #imageContainer img.expanded {
       width: 80vw; /* 확대된 이미지의 너비 */
       max-height: 80vh; /* 확대된 이미지의 최대 높이 */
+      cursor: zoom-out; /* 확대된 상태에서는 축소 아이콘 */
+
     }
     #imageContainer video {
       /* 비디오에는 확대 기능을 적용하지 않음 */
