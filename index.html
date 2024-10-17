@@ -887,7 +887,7 @@
     // 미디어 표시 함수 (이미지 또는 동영상)
     async function displayMedia(name, url) {
       try {
-        // 이미지의 검열 여부 조회
+        // 이미지의 검열 여부 및 타입 조회
         const docRef = doc(db, 'images', name);
         const docSnap = await getDoc(docRef);
         let needsCensorship = false;
@@ -899,11 +899,9 @@
         }
 
         const imageContainer = document.getElementById('imageContainer');
-        const fileExtension = name.split('.').pop().toLowerCase();
-        const imageExtensions = ['png', 'bmp', 'jpg', 'jpeg', 'webp', 'gif'];
-        const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
-        const isImage = imageExtensions.includes(fileExtension);
-        const isVideo = videoExtensions.includes(fileExtension) || mediaType === 'video';
+
+        const isImage = mediaType === 'image';
+        const isVideo = mediaType === 'video';
 
         if (isImage || isVideo) {
           if (needsCensorship) {
