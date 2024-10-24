@@ -83,7 +83,8 @@
       justify-content: center;
       align-items: center;
     }
-  
+    
+    /* 기존 스타일 유지 */
     #imageContainer img,
     #imageContainer video {
       width: 40vw;
@@ -97,14 +98,45 @@
       object-fit: contain;
       cursor: zoom-in; /* 기본 상태에서는 확대 아이콘 */
     }
+
+    /* 가로가 긴 경우 */
+    #imageContainer img.landscape,
+    #imageContainer video.landscape {
+      width: 40vw;
+      height: auto;
+      max-width: 40vw;
+      max-height: 50vh;
+      cursor: zoom-in; /* 기본 상태에서는 확대 아이콘 */
+    }
+
+    /* 세로가 긴 경우 */
+    #imageContainer img.portrait,
+    #imageContainer video.portrait {
+      width: auto;
+      height: 50vh;
+      max-width: 40vw;
+      max-height: 50vh;
+      cursor: zoom-in; /* 기본 상태에서는 확대 아이콘 */
+    }
   
-    #imageContainer img.expanded {
+    /* 확대된 상태의 가로가 긴 경우 */
+    #imageContainer img.expanded.landscape,
+    #imageContainer video.expanded.landscape {
       width: 80vw;
       height: auto;
-      max-height: 100vh;
       max-width: 80vw;
+      max-height: 100vh;
       cursor: zoom-out;
-      object-fit: contain;
+    }
+
+    /* 확대된 상태의 세로가 긴 경우 */
+    #imageContainer img.expanded.portrait,
+    #imageContainer video.expanded.portrait {
+      width: auto;
+      height: 100vh;
+      max-width: 80vw;
+      max-height: 100vh;
+      cursor: zoom-out;
     }
 
     .container {
@@ -929,6 +961,15 @@
               imgElement.src = url; // 직접 다운로드 URL 할당
               imageContainer.appendChild(imgElement);
 
+              // 이미지 로드 완료 후 가로세로 비율에 따라 클래스 추가
+              imgElement.addEventListener('load', () => {
+                if (imgElement.naturalWidth > imgElement.naturalHeight) {
+                  imgElement.classList.add('landscape');
+                } else {
+                  imgElement.classList.add('portrait');
+                }
+              });
+
               // 확대 기능 (이미지에만 적용)
               imgElement.addEventListener('click', function () {
                 imgElement.classList.toggle('expanded');
@@ -945,6 +986,15 @@
               videoElement.controls = true;
               videoElement.style.cursor = 'pointer';
               imageContainer.appendChild(videoElement);
+
+              // 비디오 로드 완료 후 가로세로 비율에 따라 클래스 추가
+              videoElement.addEventListener('loadedmetadata', () => {
+                if (videoElement.videoWidth > videoElement.videoHeight) {
+                  videoElement.classList.add('landscape');
+                } else {
+                  videoElement.classList.add('portrait');
+                }
+              });
 
               // 동영상에는 확대 기능을 적용하지 않음
 
