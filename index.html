@@ -138,7 +138,7 @@
       max-height: 100vh;
       cursor: zoom-out;
     }
-
+  
     .container {
       text-align: center;
     }
@@ -391,68 +391,6 @@
         statusElement.innerText = "클립보드에 이미지나 비디오가 없습니다.";
       }
     });
-
-    // 동영상 압축 함수 (WebM 형식으로)
-    async function compressVideo(videoFile) {
-      return new Promise((resolve, reject) => {
-        const video = document.createElement('video');
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const stream = canvas.captureStream(30); // 30 FPS
-        const recordedChunks = [];
-        let mediaRecorder;
-
-        video.src = URL.createObjectURL(videoFile);
-        video.crossOrigin = 'anonymous';
-        video.muted = true; // 소리 제거
-        video.load();
-
-        video.addEventListener('loadedmetadata', () => {
-          // Set canvas dimensions to video dimensions
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          
-          // 재생 속도 다시 설정 (안전 조치)
-          video.playbackRate = 1;
-
-          mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'video/webm; codecs=vp9', // VP9 코덱 사용
-            videoBitsPerSecond: 2500000 // 비트레이트 설정 (예: 2.5 Mbps)
-          });
-
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-              recordedChunks.push(event.data);
-            }
-          };
-
-          mediaRecorder.onstop = () => {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            resolve(blob);
-          };
-
-          mediaRecorder.start();
-
-          video.play();
-        });
-
-        video.addEventListener('play', () => {
-          const draw = () => {
-            if (video.paused || video.ended) {
-              mediaRecorder.stop();
-              return;
-            }
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            requestAnimationFrame(draw);
-          };
-          draw();
-        });
-
-        video.addEventListener('error', (e) => {
-          reject(e);
-        });
-      });
-    }
 
     // DataURL을 Blob으로 변환하는 함수
     function dataURLtoBlob(dataurl) {
@@ -746,17 +684,11 @@
             }
 
             if (isVideo) {
-              // 동영상 압축
-              statusElement.innerText = "동영상 압축 중...(느릴 수 있습니다.)";
-              uploadFile = await compressVideo(mediaFile);
-              if (!uploadFile) {
-                statusElement.innerText = "동영상 압축 실패";
-                return;
-              }
+              // 동영상 압축 제거: 원본 파일을 그대로 사용
 
-              // 압축된 동영상의 첫 프레임을 이미지로 추출하여 안전성 검사
+              // 동영상 첫 프레임을 추출하여 검열
               statusElement.innerText = "동영상 첫 프레임 분석 중...";
-              const firstFrameBlob = await extractFirstFrame(uploadFile);
+              const firstFrameBlob = await extractFirstFrame(mediaFile);
               const { isCensored, reasons } = await getImageSafetyScore(firstFrameBlob);
               if (isCensored) {
                 censorshipReasons = reasons;
