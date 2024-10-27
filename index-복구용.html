@@ -175,18 +175,6 @@
       display: none;
     }
   
-    @media (max-width: 768px) {
-      button {
-        width: 300px;
-      }
-      #linkBox {
-        width: 200px;
-      }
-      .header-content {
-        font-size: 16px;
-      }
-    }
-  
     /* 수정된 검열된 이미지 스타일 */
     .censored {
       position: relative;
@@ -266,6 +254,33 @@
       /* 호버 시 transform 제거 */
       transform: none;
     }
+
+    .title-img-desktop {
+      display: block;
+    }
+
+    .title-img-mobile {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      button {
+        width: 300px;
+      }
+      #linkBox {
+        width: 200px;
+      }
+      .header-content {
+        font-size: 23px;
+      }
+      .title-img-desktop {
+        display: none;
+      }
+      .title-img-mobile {
+        display: block;
+      }
+    }
+
     /* 기존 기타 스타일 유지 */
   </style>  
   <!-- Video.js CSS -->
@@ -276,7 +291,8 @@
 <body>
   <div class="header-content">
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
-    <h1>이미지 공유</h1>
+    <h1 class="title-img-desktop">이미지 공유</h1>
+    <h1 class="title-img-mobile">이미지<br>공유</h1>
     <button class="toggle-button" id="toggleButton">+</button>
   </div>
 
