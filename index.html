@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en"></html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
   <title>img Share</title>
   <style>
-    /* 기존 스타일 유지 */
     body {
       display: flex;
       flex-direction: column;
@@ -280,12 +279,8 @@
         display: block;
       }
     }
-
-    /* 기존 기타 스타일 유지 */
   </style>  
-  <!-- Video.js CSS -->
   <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
-  <!-- Video.js JavaScript -->
   <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
 </head>
 <body>
@@ -297,9 +292,9 @@
   </div>
 
   <div class="upload-container" id="uploadContainer">
-    <button id="fileSelectButton">Select files (images and videos)</button>
+    <button id="fileSelectButton">Select File (Image and Video)</button>
     <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" multiple>
-    <div id="fileNameDisplay">File not selected</div>
+    <div id="fileNameDisplay">No file selected</div>
     <button id="uploadButton">Upload</button>
     <p id="status"></p>
     <div class="link-container">
@@ -310,16 +305,11 @@
 
   <div id="imageContainer"></div>
 
-  <!-- 사용자 정의 컨텍스트 메뉴 -->
   <div class="custom-context-menu" id="customContextMenu">
-    <button id="copyImage">Copy (with error)</button>
+    <button id="copyImage">Copy (Error)</button>
     <button id="downloadImage">Download</button>
   </div>
 
-  <!-- Firebase SDKs -->
   <script type="module" src="script.min.js"></script>
-
-
-  <!-- gifshot 라이브러리 제거 -->
 </body>
 </html>
