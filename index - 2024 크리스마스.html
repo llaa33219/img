@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png" />
+  <title>이미지 공유</title>
+  <style>
+    /* ===== [1] 기존 스타일 ===== */
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      overflow: auto;
+      background: #fefefe no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+    }
+
+    .header-content h1 {
+      color: #000000;
+    }
+
+    .upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    button {
+      background-color: #c62828; /* 레드 */
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 20px;
+      margin: 20px 0;
+      width: 600px;
+      height: 61px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease,
+        box-shadow 0.3s ease;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+      position: relative;  /* 버튼 안에 눈송이를 position:absolute로 붙이려면 필요 */
+      overflow: visible;   /* 버튼 밖으로 눈송이가 살짝 튀어나올 수도 있으니 visible로 */
+    }
+
+    button:hover {
+      background-color: #a21818;
+      transform: translateY(2px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      background-color: #670c0c;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    #fileNameDisplay {
+      font-size: 16px;
+      margin-top: 10px;
+      color: #333;
+    }
+
+    #linkBox {
+      width: 500px;
+      height: 40px;
+      margin: 20px 0;
+      font-size: 16px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .copy-button {
+      background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png')
+        no-repeat center;
+      background-size: contain;
+      border: none;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    .link-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #imageContainer img,
+    #imageContainer video {
+      width: 40vw;
+      height: auto;
+      max-width: 40vw;
+      max-height: 50vh;
+      display: block;
+      margin: 20px auto;
+      transition: all 0.3s ease;
+      object-fit: contain;
+      cursor: zoom-in;
+    }
+
+    /* 가로가 긴 경우 */
+    #imageContainer img.landscape,
+    #imageContainer video.landscape {
+      width: 40vw;
+      height: auto;
+      max-width: 40vw;
+      max-height: 50vh;
+    }
+
+    /* 세로가 긴 경우 */
+    #imageContainer img.portrait,
+    #imageContainer video.portrait {
+      width: auto;
+      height: 50vh;
+      max-width: 40vw;
+      max-height: 50vh;
+    }
+
+    /* 확대된 상태의 가로가 긴 경우 */
+    #imageContainer img.expanded.landscape,
+    #imageContainer video.expanded.landscape {
+      width: 80vw;
+      height: auto;
+      max-width: 80vw;
+      max-height: 100vh;
+      cursor: zoom-out;
+    }
+
+    /* 확대된 상태의 세로가 긴 경우 */
+    #imageContainer img.expanded.portrait,
+    #imageContainer video.expanded.portrait {
+      width: auto;
+      height: 100vh;
+      max-width: 80vw;
+      max-height: 100vh;
+      cursor: zoom-out;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 30px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .header-content img {
+      margin-right: 20px;
+    }
+
+    .toggle-button {
+      background-color: #28a745; /* 그린 */
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 24px;
+      margin-left: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .censored {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .censored img,
+    .censored video {
+      display: none; /* 미디어 숨김 */
+    }
+
+    .censored .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8); /* 검열 배경 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px #000;
+      pointer-events: none;
+    }
+
+    .custom-context-menu {
+      color: #000;
+      position: absolute;
+      background-color: #e0e0e0;
+      z-index: 1000;
+      width: 150px;
+      display: none;
+      flex-direction: column;
+      border-radius: 8px;
+      box-shadow: none;
+      padding: 0;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .custom-context-menu button {
+      color: #000;
+      background-color: #e7e7e7;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 6px 10px;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      box-sizing: border-box;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      transform: none;
+    }
+
+    .custom-context-menu button:hover {
+      background-color: #9c9c9c;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .title-img-desktop {
+      display: block;
+    }
+
+    .title-img-mobile {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      button {
+        width: 300px;
+      }
+      #linkBox {
+        width: 200px;
+      }
+      .header-content {
+        font-size: 23px;
+      }
+      .title-img-desktop {
+        display: none;
+      }
+      .title-img-mobile {
+        display: block;
+      }
+    }
+
+    /* ===== 눈송이 기본 스타일 (JS로 움직이므로 위치는 transform으로 제어) ===== */
+    .snowflake {
+      position: fixed;       /* 화면을 기준으로 고정 */
+      top: 0; left: 0;
+      pointer-events: none;  /* 클릭 방지 */
+      z-index: 9999;
+      color: #8ed2ff;           /* 흰색 눈 */
+      font-size: 16px;       
+      will-change: transform; /* 성능 최적화용 */
+    }
+
+    /* 버튼에 붙은(멈춘) 눈송이 스타일 */
+    .anchored-snowflake {
+      position: absolute;
+      pointer-events: none;
+      color: #8ed2ff;           /* ❄ 흰색 표시 */
+      line-height: 1;
+      white-space: nowrap;   /* 텍스트가 줄바꿈되지 않도록 */
+      user-select: none;     /* 드래그 방지 */
+    }
+  </style>
+  <!-- Video.js CSS -->
+  <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+  <!-- Video.js JavaScript -->
+  <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+</head>
+<body>
+  <div class="header-content">
+    <img
+      src="https://i.imgur.com/2MkyDCh.png"
+      alt="Logo"
+      style="width: 120px; height: auto"
+    />
+    <h1 class="title-img-desktop">이미지 공유</h1>
+    <h1 class="title-img-mobile">
+      이미지<br />
+      공유
+    </h1>
+    <button class="toggle-button" id="toggleButton">+</button>
+  </div>
+
+  <div class="upload-container" id="uploadContainer">
+    <!-- 여러 버튼들 -->
+    <button id="fileSelectButton">파일 선택(이미지 및 영상)</button>
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/*,video/*"
+      style="display: none"
+      multiple
+    />
+    <div id="fileNameDisplay">파일 선택 알림</div>
+    <button id="uploadButton">업로드</button>
+    <p id="status"></p>
+    <div class="link-container">
+      <input type="text" id="linkBox" readonly />
+      <button class="copy-button" id="copyButton"></button>
+    </div>
+  </div>
+
+  <div id="imageContainer"></div>
+
+  <!-- 사용자 정의 컨텍스트 메뉴 -->
+  <div class="custom-context-menu" id="customContextMenu">
+    <button id="copyImage">복사(에러있음)</button>
+    <button id="downloadImage">다운로드</button>
+  </div>
+
+  <!-- Firebase SDKs (사용 중이라면) -->
+  <script type="module" src="script.min.js"></script>
+
+  <!-- ===== [JS] 눈송이: 여러 버튼에 쌓이기 ===== -->
+  <script>
+    /**
+     * 요약:
+     *  - 일정 간격으로 "❄" 눈송이를 스폰 (setInterval)
+     *  - requestAnimationFrame으로 x,y 좌표 갱신하며 아래로 이동
+     *  - 각 눈송이가 화면 아래로 벗어나면 제거
+     *  - 버튼들과 충돌하면 "버튼 내부"에 새로 anchored-snowflake를 붙인 뒤 제거
+     */
+
+    const SNOWFLAKE_COUNT = 200;  // 최대 눈송이 수 (이 이상은 동시에 안 만든다)
+    const SPAWN_INTERVAL = 400;   // (ms) 눈송이 생성 주기 (숫자를 줄이면 더 자주 생성)
+    const FALL_SPEED_MIN = 1;     // 최소 낙하 속도
+    const FALL_SPEED_MAX = 3;     // 최대 낙하 속도
+    const SIZE_MIN = 16;          // 최소 글자 크기(px)
+    const SIZE_MAX = 28;          // 최대 글자 크기(px)
+
+    let activeSnowflakes = [];
+
+    function spawnSnowflake() {
+      // 이미 많이 있으면 만들지 않음
+      if (activeSnowflakes.length >= SNOWFLAKE_COUNT) return;
+
+      const el = document.createElement('div');
+      el.className = 'snowflake';
+      el.textContent = '❄'; // 눈 모양 문자
+
+      // 눈송이 크기와 초기 위치/속도 설정
+      const size = randBetween(SIZE_MIN, SIZE_MAX);
+      const startX = Math.random() * window.innerWidth;
+      const startY = -size - 10; // 화면 위 조금 더 위에서 시작
+      const speed = randBetween(FALL_SPEED_MIN, FALL_SPEED_MAX);
+
+      // 스타일 적용
+      el.style.fontSize = size + 'px';
+      el.style.transform = `translate(${startX}px, ${startY}px)`;
+
+      document.body.appendChild(el);
+
+      // activeSnowflakes에 등록
+      activeSnowflakes.push({
+        el,
+        x: startX,
+        y: startY,
+        speed,
+        size
+      });
+    }
+
+    function updateSnowflakes() {
+      const allButtons = document.querySelectorAll('button');
+
+      for (let i = 0; i < activeSnowflakes.length; i++) {
+        const flake = activeSnowflakes[i];
+        if (!flake) continue;
+
+        // 아래로 이동
+        flake.y += flake.speed;
+
+        // 버튼들과 충돌 체크
+        let anchored = false;
+        for (const btn of allButtons) {
+          const rect = btn.getBoundingClientRect();
+
+          // 눈송이의 중심 X 좌표
+          const flakeCenterX = flake.x + (flake.size / 2);
+          // 눈송이의 바닥 Y 좌표
+          const flakeBottomY = flake.y + flake.size;
+
+          // 충돌 판정:
+          // 1) flakeBottomY >= 버튼의 상단
+          // 2) flakeCenterX가 버튼의 왼쪽과 오른쪽 사이
+          // 3) flake.y <= 버튼의 하단(눈송이 윗부분이 버튼 아래쪽보다 위에 있어야)
+          const hit =
+            flakeBottomY >= rect.top &&
+            flakeCenterX >= rect.left &&
+            flakeCenterX <= rect.right &&
+            flake.y <= rect.bottom;
+
+          if (hit) {
+            anchorSnowflakeToButton(flake, btn, rect);
+            activeSnowflakes[i] = null;
+            anchored = true;
+            break; // 여러 버튼 중 한 군데만 붙이면 끝
+          }
+        }
+
+        // 만약 버튼에 붙지 않았다면
+        if (!anchored) {
+          // 화면 아래로 벗어나면 제거
+          if (flake.y > window.innerHeight) {
+            flake.el.remove();
+            activeSnowflakes[i] = null;
+          } else {
+            // 여전히 공중에 있으면 위치 갱신
+            flake.el.style.transform = `translate(${flake.x}px, ${flake.y}px)`;
+          }
+        }
+      }
+
+      // null 정리
+      activeSnowflakes = activeSnowflakes.filter(f => f !== null);
+
+      requestAnimationFrame(updateSnowflakes);
+    }
+
+    function anchorSnowflakeToButton(flake, btn, rect) {
+      // 현재 눈송이 DOM 제거
+      flake.el.remove();
+
+      // 버튼 내부에 붙일 새 요소
+      const anchoredEl = document.createElement('div');
+      anchoredEl.className = 'anchored-snowflake';
+      anchoredEl.textContent = '❄';               // 같은 문자
+      anchoredEl.style.fontSize = flake.size + 'px';
+
+      // 버튼 내부 좌표계로 변환
+      const offsetX = flake.x - rect.left;
+      const offsetY = flake.y - rect.top;
+
+      anchoredEl.style.left = offsetX + 'px';
+      anchoredEl.style.top = offsetY + 'px';
+
+      btn.appendChild(anchoredEl);
+    }
+
+    // 랜덤 실수 [min, max)
+    function randBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 프레임 루프 시작
+      requestAnimationFrame(updateSnowflakes);
+
+      // 일정 간격으로 눈송이를 계속 생성
+      setInterval(spawnSnowflake, SPAWN_INTERVAL);
+    });
+  </script>
+</body>
+</html>
