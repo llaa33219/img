@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
-  <title>이미지 공유</title>
+  <title>img Share</title>
   <style>
     /* 기존 스타일 유지 */
     body {
@@ -291,16 +291,16 @@
 <body>
   <div class="header-content">
     <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
-    <h1 class="title-img-desktop">이미지 공유</h1>
-    <h1 class="title-img-mobile">이미지<br>공유</h1>
+    <h1 class="title-img-desktop">img Share</h1>
+    <h1 class="title-img-mobile">img<br>Share</h1>
     <button class="toggle-button" id="toggleButton">+</button>
   </div>
 
   <div class="upload-container" id="uploadContainer">
-    <button id="fileSelectButton">파일 선택(이미지 및 영상)</button>
+    <button id="fileSelectButton">Select files (images and videos)</button>
     <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" multiple>
-    <div id="fileNameDisplay">파일 선택 안됨</div>
-    <button id="uploadButton">업로드</button>
+    <div id="fileNameDisplay">File not selected</div>
+    <button id="uploadButton">Upload</button>
     <p id="status"></p>
     <div class="link-container">
       <input type="text" id="linkBox" readonly>
@@ -312,8 +312,8 @@
 
   <!-- 사용자 정의 컨텍스트 메뉴 -->
   <div class="custom-context-menu" id="customContextMenu">
-    <button id="copyImage">복사(에러있음)</button>
-    <button id="downloadImage">다운로드</button>
+    <button id="copyImage">Copy (with error)</button>
+    <button id="downloadImage">Download</button>
   </div>
 
   <!-- Firebase SDKs -->
