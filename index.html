@@ -1,315 +1,435 @@
 <!DOCTYPE html>
-<html lang="en"></html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="https://i.imgur.com/2MkyDCh.png" type="image/png">
-  <title>img Share</title>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      padding: 20px;
-      overflow: auto;
-    }
-  
-    .upload-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-  
-    button {
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 10px 20px;
-      margin: 20px 0;
-      width: 600px;
-      height: 61px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-      font-weight: bold;
-      font-size: 18px;
-      text-align: center;
-    }
-  
-    button:hover {
-      background-color: #005BDD;
-      transform: translateY(2px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-  
-    button:active {
-      background-color: #0026a3;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-  
-    #fileNameDisplay {
-      font-size: 16px;
-      margin-top: 10px;
-      color: #333;
-    }
-  
-    #linkBox {
-      width: 500px;
-      height: 40px;
-      margin: 20px 0;
-      font-size: 16px;
-      padding: 10px;
-      text-align: center;
-    }
-  
-    .copy-button {
-      background: url('https://img.icons8.com/ios-glyphs/30/000000/copy.png') no-repeat center;
-      background-size: contain;
-      border: none;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
-  
-    .link-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    /* 기존 스타일 유지 */
-    #imageContainer img,
-    #imageContainer video {
-      width: 40vw;
-      height: auto;
-      max-width: 40vw;
-      max-height: 50vh;
-      display: block;
-      margin: 20px auto;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      object-fit: contain;
-      cursor: zoom-in; /* 기본 상태에서는 확대 아이콘 */
-    }
-
-    /* 가로가 긴 경우 */
-    #imageContainer img.landscape,
-    #imageContainer video.landscape {
-      width: 40vw;
-      height: auto;
-      max-width: 40vw;
-      max-height: 50vh;
-      cursor: zoom-in; /* 기본 상태에서는 확대 아이콘 */
-    }
-
-    /* 세로가 긴 경우 */
-    #imageContainer img.portrait,
-    #imageContainer video.portrait {
-      width: auto;
-      height: 50vh;
-      max-width: 40vw;
-      max-height: 50vh;
-      cursor: zoom-in; /* 기본 상태에서는 확대 아이콘 */
-    }
-  
-    /* 확대된 상태의 가로가 긴 경우 */
-    #imageContainer img.expanded.landscape,
-    #imageContainer video.expanded.landscape {
-      width: 80vw;
-      height: auto;
-      max-width: 80vw;
-      max-height: 100vh;
-      cursor: zoom-out;
-    }
-
-    /* 확대된 상태의 세로가 긴 경우 */
-    #imageContainer img.expanded.portrait,
-    #imageContainer video.expanded.portrait {
-      width: auto;
-      height: 100vh;
-      max-width: 80vw;
-      max-height: 100vh;
-      cursor: zoom-out;
-    }
-  
-    .container {
-      text-align: center;
-    }
-  
-    .header-content {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      font-size: 30px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-  
-    .header-content img {
-      margin-right: 20px;
-    }
-  
-    .toggle-button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-size: 24px;
-      margin-left: 20px;
-    }
-  
-    .hidden {
-      display: none;
-    }
-  
-    /* 수정된 검열된 이미지 스타일 */
-    .censored {
-      position: relative;
-      display: inline-block;
-      /* 이미지 자체는 숨기고 오버레이로만 표시 */
-      width: 100%;
-      height: 100%;
-    }
-  
-    .censored img,
-    .censored video {
-      display: none; /* 미디어 숨김 */
-    }
-  
-    .censored .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.8); /* 검열 배경 */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-      text-shadow: 2px 2px 4px #000;
-      pointer-events: none;
-    }
-  
-    /* 사용자 정의 컨텍스트 메뉴 스타일 수정 */
-    .custom-context-menu {
-      color: #000; /* 텍스트 색상을 검정으로 설정 */
-      position: absolute;
-      background-color: #e0e0e0;
-      z-index: 1000;
-      width: 150px;
-      display: none; /* 기본적으로 숨김 */
-      flex-direction: column;
-      border-radius: 8px; /* 컨텍스트 메뉴의 모서리를 둥글게 설정 */
-      box-shadow: none; /* 그림자 제거 */
-      padding: 0; /* 내부 여백 제거 */
-      
-      /* 추가된 스타일 */
-      overflow: hidden; /* 메뉴 내에서 넘치는 부분 숨김 */
-      box-sizing: border-box; /* 패딩과 보더를 포함한 크기 계산 */
-    }
-
-    .custom-context-menu button {
-      color: #000;
-      background-color: #e7e7e7;
-      text-align: left;
-      width: 100%;
-      cursor: pointer;
-      font-size: 16px; /* 글자 크기 유지 */
-      padding: 6px 10px; /* 버튼 세로 길이 조정 */
-      margin: 0; /* 버튼 간 공간 제거 */
-      border: none; /* 기본 테두리 제거 */
-      border-radius: 0; /* 모서리 둥글지 않게 설정 */
-      box-shadow: none; /* 그림자 제거 */
-      
-      /* 추가된 스타일 */
-      box-sizing: border-box; /* 패딩과 보더를 포함한 크기 계산 */
-      
-      /* Transition 재정의: transform을 제외하고 background-color와 box-shadow만 포함 */
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      
-      /* 기본 transform 제거 */
-      transform: none;
-    }
-
-    .custom-context-menu button:hover {
-      background-color: #9c9c9c;
-      box-shadow: none;
-      
-      /* 호버 시 transform 제거 */
-      transform: none;
-    }
-
-    .title-img-desktop {
-      display: block;
-    }
-
-    .title-img-mobile {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      button {
-        width: 300px;
-      }
-      #linkBox {
-        width: 200px;
-      }
-      .header-content {
-        font-size: 23px;
-      }
-      .title-img-desktop {
-        display: none;
-      }
-      .title-img-mobile {
-        display: block;
-      }
-    }
-  </style>  
-  <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
-  <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Storage 이미지 다운로드</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        input, select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .status {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .error {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+        
+        .success {
+            border-left-color: #4CAF50;
+            background: #f0f8f0;
+            color: #4CAF50;
+        }
+        
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+        }
+        
+        .file-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .batch-info {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+    </style>
 </head>
 <body>
-  <div class="header-content">
-    <img src="https://i.imgur.com/2MkyDCh.png" alt="Logo" style="width: 120px; height: auto;">
-    <h1 class="title-img-desktop">img Share</h1>
-    <h1 class="title-img-mobile">img<br>Share</h1>
-    <button class="toggle-button" id="toggleButton">+</button>
-  </div>
-
-  <div class="upload-container" id="uploadContainer">
-    <button id="fileSelectButton">Select File (Image and Video)</button>
-    <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" multiple>
-    <div id="fileNameDisplay">No file selected</div>
-    <button id="uploadButton">Upload</button>
-    <p id="status"></p>
-    <div class="link-container">
-      <input type="text" id="linkBox" readonly>
-      <button class="copy-button" id="copyButton"></button>
+    <div class="container">
+        <h1>🔥 Firebase Storage 이미지 다운로드</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="folderPrefix">📁 다운로드할 폴더 (선택사항)</label>
+                <input type="text" id="folderPrefix" placeholder="예: uploads/ (전체 다운로드면 비워두세요)">
+            </div>
+            
+            <div class="input-group">
+                <label for="batchSize">⚡ 배치 크기 (동시 다운로드 수)</label>
+                <select id="batchSize">
+                    <option value="5">5개씩</option>
+                    <option value="10" selected>10개씩</option>
+                    <option value="20">20개씩</option>
+                    <option value="50">50개씩</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="delay">⏱️ 배치 간 딜레이 (밀리초)</label>
+                <select id="delay">
+                    <option value="500">0.5초</option>
+                    <option value="1000" selected>1초</option>
+                    <option value="2000">2초</option>
+                    <option value="3000">3초</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="scanBtn" onclick="scanFiles()">📋 파일 스캔하기</button>
+        <button id="downloadBtn" onclick="startDownload()" disabled style="margin-left: 10px;">⬇️ 다운로드 시작</button>
+        
+        <div id="status"></div>
+        
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0% (0/0)</div>
+        </div>
+        
+        <div id="fileList"></div>
     </div>
-  </div>
 
-  <div id="imageContainer"></div>
+    <script type="module">
+        // Firebase 설정
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
-  <div class="custom-context-menu" id="customContextMenu">
-    <button id="copyImage">Copy (Error)</button>
-    <button id="downloadImage">Download</button>
-  </div>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCa6O_jCJ7XyxU5oOdoNqmMkbqpohKfLyE",
+            authDomain: "imgshare-2.firebaseapp.com",
+            projectId: "imgshare-2",
+            storageBucket: "imgshare-2.appspot.com",
+            messagingSenderId: "669732206491",
+            appId: "1:669732206491:web:c57c3238a46b37c86c133e",
+            measurementId: "G-C97WZLE7J0"
+        };
 
-  <script type="module" src="script.min.js"></script>
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+
+        // 전역 변수
+        let allImageFiles = [];
+        let downloadedCount = 0;
+        let failedFiles = [];
+
+        // 지원하는 이미지 확장자
+        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function updateProgress(current, total) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}% (${current}/${total})`;
+        }
+
+        function isImageFile(fileName) {
+            const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+            return imageExtensions.includes(ext);
+        }
+
+        async function getAllFilesRecursively(storageRef) {
+            const files = [];
+            
+            try {
+                const result = await listAll(storageRef);
+                
+                // 현재 폴더의 파일들 추가
+                for (const item of result.items) {
+                    if (isImageFile(item.name)) {
+                        files.push(item);
+                    }
+                }
+                
+                // 하위 폴더들 재귀적으로 탐색
+                for (const prefix of result.prefixes) {
+                    const subFiles = await getAllFilesRecursively(prefix);
+                    files.push(...subFiles);
+                }
+                
+            } catch (error) {
+                console.error('폴더 스캔 오류:', error);
+            }
+            
+            return files;
+        }
+
+        window.scanFiles = async function() {
+            const scanBtn = document.getElementById('scanBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const folderPrefix = document.getElementById('folderPrefix').value.trim();
+            
+            scanBtn.disabled = true;
+            downloadBtn.disabled = true;
+            allImageFiles = [];
+            
+            showStatus('📡 Firebase Storage 스캔 중...', 'info');
+            
+            try {
+                const storageRef = folderPrefix ? ref(storage, folderPrefix) : ref(storage);
+                allImageFiles = await getAllFilesRecursively(storageRef);
+                
+                if (allImageFiles.length === 0) {
+                    showStatus('❌ 이미지 파일을 찾을 수 없습니다.', 'error');
+                } else {
+                    showStatus(`✅ ${allImageFiles.length}개의 이미지 파일을 찾았습니다!`, 'success');
+                    downloadBtn.disabled = false;
+                    
+                    // 파일 목록 표시
+                    const fileListDiv = document.getElementById('fileList');
+                    const fileNames = allImageFiles.slice(0, 50).map(file => file.fullPath);
+                    const moreText = allImageFiles.length > 50 ? `\n... 그리고 ${allImageFiles.length - 50}개 더` : '';
+                    
+                    fileListDiv.innerHTML = `
+                        <div class="file-list">
+                            <strong>발견된 이미지 파일들 (최대 50개 표시):</strong><br>
+                            ${fileNames.map(name => `<div class="file-item">${name}</div>`).join('')}
+                            ${moreText ? `<div class="file-item"><strong>${moreText}</strong></div>` : ''}
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('스캔 오류:', error);
+                showStatus(`❌ 스캔 실패: ${error.message}`, 'error');
+            } finally {
+                scanBtn.disabled = false;
+            }
+        };
+
+        async function downloadFile(fileRef, fileName) {
+            try {
+                const downloadURL = await getDownloadURL(fileRef);
+                
+                // 파일 다운로드
+                const response = await fetch(downloadURL);
+                const blob = await response.blob();
+                
+                // 브라우저 다운로드 트리거
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName.split('/').pop(); // 파일명만 추출
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                return true;
+            } catch (error) {
+                console.error(`다운로드 실패: ${fileName}`, error);
+                failedFiles.push({ fileName, error: error.message });
+                return false;
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        window.startDownload = async function() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const scanBtn = document.getElementById('scanBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const delay = parseInt(document.getElementById('delay').value);
+            
+            downloadBtn.disabled = true;
+            scanBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            
+            downloadedCount = 0;
+            failedFiles = [];
+            
+            showStatus(`🚀 ${allImageFiles.length}개 파일 다운로드를 시작합니다...`, 'info');
+            
+            try {
+                // 파일들을 배치로 나누어 처리
+                for (let i = 0; i < allImageFiles.length; i += batchSize) {
+                    const batch = allImageFiles.slice(i, i + batchSize);
+                    
+                    showStatus(
+                        `📦 배치 ${Math.floor(i/batchSize) + 1}/${Math.ceil(allImageFiles.length/batchSize)} 처리 중... (${batch.length}개 파일)`,
+                        'info'
+                    );
+                    
+                    // 현재 배치의 모든 파일을 병렬로 다운로드
+                    const promises = batch.map(async (fileRef) => {
+                        const success = await downloadFile(fileRef, fileRef.fullPath);
+                        if (success) {
+                            downloadedCount++;
+                        }
+                        updateProgress(downloadedCount + failedFiles.length, allImageFiles.length);
+                    });
+                    
+                    await Promise.all(promises);
+                    
+                    // 다음 배치 전에 딜레이
+                    if (i + batchSize < allImageFiles.length) {
+                        await sleep(delay);
+                    }
+                }
+                
+                // 완료 메시지
+                const successCount = downloadedCount;
+                const failedCount = failedFiles.length;
+                
+                showStatus(
+                    `🎉 다운로드 완료! 성공: ${successCount}개, 실패: ${failedCount}개`,
+                    failedCount === 0 ? 'success' : 'error'
+                );
+                
+                if (failedFiles.length > 0) {
+                    console.log('실패한 파일들:', failedFiles);
+                    
+                    // 실패한 파일 목록을 JSON으로 다운로드
+                    const failedBlob = new Blob([JSON.stringify(failedFiles, null, 2)], 
+                        { type: 'application/json' });
+                    const url = window.URL.createObjectURL(failedBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'failed_files.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+                
+            } catch (error) {
+                console.error('다운로드 오류:', error);
+                showStatus(`❌ 다운로드 실패: ${error.message}`, 'error');
+            } finally {
+                downloadBtn.disabled = false;
+                scanBtn.disabled = false;
+            }
+        };
+
+        // 페이지 로드 시 초기 메시지
+        showStatus('👋 Firebase Storage에서 이미지를 다운로드할 준비가 되었습니다!', 'info');
+    </script>
 </body>
 </html>
