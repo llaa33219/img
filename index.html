@@ -191,9 +191,14 @@
             </div>
         </div>
         
-        <button id="scanBtn" onclick="scanFiles()">📋 파일 스캔하기</button>
-        <button id="downloadBtn" onclick="startDownload()" disabled style="margin-left: 10px;">⬇️ 배치 다운로드</button>
-        <button id="downloadAllBtn" onclick="downloadAll()" disabled style="margin-left: 10px;">🚀 전체 한번에 다운로드</button>
+        <button id="oneClickBtn" onclick="oneClickDownload()" style="font-size: 18px; padding: 20px 40px;">🚀 원클릭 다운로드 시작!</button>
+        
+        <div class="batch-info">
+            <strong>📌 원클릭 다운로드 기능:</strong><br>
+            • 자동으로 Firebase Storage 스캔<br>
+            • 발견된 모든 이미지를 즉시 다운로드<br>
+            • 별도 설정 없이 한 번에 완료!
+        </div>
         
         <div id="status"></div>
         
@@ -357,12 +362,14 @@
 
         window.startDownload = async function() {
             const downloadBtn = document.getElementById('downloadBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
             const scanBtn = document.getElementById('scanBtn');
             const progressContainer = document.getElementById('progressContainer');
             const batchSize = parseInt(document.getElementById('batchSize').value);
             const delay = parseInt(document.getElementById('delay').value);
             
             downloadBtn.disabled = true;
+            downloadAllBtn.disabled = true;
             scanBtn.disabled = true;
             progressContainer.style.display = 'block';
             
@@ -428,12 +435,179 @@
                 showStatus(`❌ 다운로드 실패: ${error.message}`, 'error');
             } finally {
                 downloadBtn.disabled = false;
+                downloadAllBtn.disabled = false;
                 scanBtn.disabled = false;
             }
         };
 
+        window.downloadAll = async function() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+            const scanBtn = document.getElementById('scanBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            
+            downloadBtn.disabled = true;
+            downloadAllBtn.disabled = true;
+            scanBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            
+            downloadedCount = 0;
+            failedFiles = [];
+            
+            showStatus(`🚀 ${allImageFiles.length}개 파일을 한 번에 다운로드합니다! (브라우저가 잠깐 느려질 수 있습니다)`, 'info');
+            
+            try {
+                // 모든 파일을 동시에 다운로드
+                const promises = allImageFiles.map(async (fileRef, index) => {
+                    try {
+                        const success = await downloadFile(fileRef, fileRef.fullPath);
+                        if (success) {
+                            downloadedCount++;
+                        }
+                        
+                        // 진행률 업데이트 (너무 자주 업데이트하지 않도록 100개마다)
+                        if (index % 100 === 0 || index === allImageFiles.length - 1) {
+                            updateProgress(downloadedCount + failedFiles.length, allImageFiles.length);
+                        }
+                        
+                        return success;
+                    } catch (error) {
+                        console.error(`파일 처리 오류: ${fileRef.fullPath}`, error);
+                        failedFiles.push({ fileName: fileRef.fullPath, error: error.message });
+                        return false;
+                    }
+                });
+                
+                showStatus(`⏳ ${allImageFiles.length}개 파일 처리 중... (완료될 때까지 기다려주세요)`, 'info');
+                
+                // 모든 다운로드 완료 대기
+                await Promise.all(promises);
+                
+                // 완료 메시지
+                const successCount = downloadedCount;
+                const failedCount = failedFiles.length;
+                
+                showStatus(
+                    `🎉 전체 다운로드 완료! 성공: ${successCount}개, 실패: ${failedCount}개`,
+                    failedCount === 0 ? 'success' : 'error'
+                );
+                
+                if (failedFiles.length > 0) {
+                    console.log('실패한 파일들:', failedFiles);
+                    
+                    // 실패한 파일 목록을 JSON으로 다운로드
+                    const failedBlob = new Blob([JSON.stringify(failedFiles, null, 2)], 
+                        { type: 'application/json' });
+                    const url = window.URL.createObjectURL(failedBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'failed_files.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+                
+            } catch (error) {
+                console.error('전체 다운로드 오류:', error);
+                showStatus(`❌ 다운로드 실패: ${error.message}`, 'error');
+            } finally {
+                downloadBtn.disabled = false;
+                downloadAllBtn.disabled = false;
+                scanBtn.disabled = false;
+            }
+        };
+
+        window.oneClickDownload = async function() {
+            const oneClickBtn = document.getElementById('oneClickBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const folderPrefix = document.getElementById('folderPrefix').value.trim();
+            
+            oneClickBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            
+            downloadedCount = 0;
+            failedFiles = [];
+            allImageFiles = [];
+            
+            try {
+                // 1단계: 파일 스캔
+                showStatus('🔍 Firebase Storage 스캔 중...', 'info');
+                updateProgress(0, 1);
+                
+                const storageRef = folderPrefix ? ref(storage, folderPrefix) : ref(storage);
+                allImageFiles = await getAllFilesRecursively(storageRef);
+                
+                if (allImageFiles.length === 0) {
+                    showStatus('❌ 이미지 파일을 찾을 수 없습니다.', 'error');
+                    return;
+                }
+                
+                showStatus(`✅ ${allImageFiles.length}개 이미지 파일 발견! 다운로드를 시작합니다...`, 'success');
+                await sleep(1000); // 1초 대기
+                
+                // 2단계: 전체 다운로드
+                showStatus(`🚀 ${allImageFiles.length}개 파일 다운로드 중...`, 'info');
+                
+                // 모든 파일을 동시에 다운로드
+                const promises = allImageFiles.map(async (fileRef, index) => {
+                    try {
+                        const success = await downloadFile(fileRef, fileRef.fullPath);
+                        if (success) {
+                            downloadedCount++;
+                        }
+                        
+                        // 진행률 업데이트 (100개마다)
+                        if (index % 100 === 0 || index === allImageFiles.length - 1) {
+                            updateProgress(downloadedCount + failedFiles.length, allImageFiles.length);
+                        }
+                        
+                        return success;
+                    } catch (error) {
+                        console.error(`파일 처리 오류: ${fileRef.fullPath}`, error);
+                        failedFiles.push({ fileName: fileRef.fullPath, error: error.message });
+                        return false;
+                    }
+                });
+                
+                // 모든 다운로드 완료 대기
+                await Promise.all(promises);
+                
+                // 완료 메시지
+                const successCount = downloadedCount;
+                const failedCount = failedFiles.length;
+                
+                showStatus(
+                    `🎉 모든 다운로드 완료! 성공: ${successCount}개, 실패: ${failedCount}개`,
+                    failedCount === 0 ? 'success' : 'error'
+                );
+                
+                if (failedFiles.length > 0) {
+                    console.log('실패한 파일들:', failedFiles);
+                    
+                    // 실패한 파일 목록을 JSON으로 다운로드
+                    const failedBlob = new Blob([JSON.stringify(failedFiles, null, 2)], 
+                        { type: 'application/json' });
+                    const url = window.URL.createObjectURL(failedBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'failed_files.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+                
+            } catch (error) {
+                console.error('원클릭 다운로드 오류:', error);
+                showStatus(`❌ 다운로드 실패: ${error.message}`, 'error');
+            } finally {
+                oneClickBtn.disabled = false;
+            }
+        };
+
         // 페이지 로드 시 초기 메시지
-        showStatus('👋 Firebase Storage에서 이미지를 다운로드할 준비가 되었습니다!', 'info');
+        showStatus('👋 원클릭 다운로드 버튼을 누르면 모든 이미지가 자동으로 다운로드됩니다!', 'info');
     </script>
 </body>
 </html>
