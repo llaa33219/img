@@ -192,7 +192,8 @@
         </div>
         
         <button id="scanBtn" onclick="scanFiles()">📋 파일 스캔하기</button>
-        <button id="downloadBtn" onclick="startDownload()" disabled style="margin-left: 10px;">⬇️ 다운로드 시작</button>
+        <button id="downloadBtn" onclick="startDownload()" disabled style="margin-left: 10px;">⬇️ 배치 다운로드</button>
+        <button id="downloadAllBtn" onclick="downloadAll()" disabled style="margin-left: 10px;">🚀 전체 한번에 다운로드</button>
         
         <div id="status"></div>
         
@@ -281,10 +282,12 @@
         window.scanFiles = async function() {
             const scanBtn = document.getElementById('scanBtn');
             const downloadBtn = document.getElementById('downloadBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
             const folderPrefix = document.getElementById('folderPrefix').value.trim();
             
             scanBtn.disabled = true;
             downloadBtn.disabled = true;
+            downloadAllBtn.disabled = true;
             allImageFiles = [];
             
             showStatus('📡 Firebase Storage 스캔 중...', 'info');
@@ -298,6 +301,7 @@
                 } else {
                     showStatus(`✅ ${allImageFiles.length}개의 이미지 파일을 찾았습니다!`, 'success');
                     downloadBtn.disabled = false;
+                    downloadAllBtn.disabled = false;
                     
                     // 파일 목록 표시
                     const fileListDiv = document.getElementById('fileList');
